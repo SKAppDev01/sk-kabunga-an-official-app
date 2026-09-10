@@ -1,98 +1,185 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from "expo-router";
+import { useEffect } from "react";
+import {
+  Image,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { getCurrentSessionUser } from "../services/session";
+import {
+  colors,
+  spacing,
+  typography,
+} from "../theme";
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
+export default function SplashScreen() {
+  useEffect(() => {
+    let isMounted = true;
+
+    const timer = setTimeout(
+      async () => {
+        try {
+          const user =
+            await getCurrentSessionUser();
+
+          if (!isMounted) {
+            return;
+          }
+
+          if (!user) {
+            router.replace("/login");
+            return;
+          }
+
+          if (
+            !user.fullName ||
+            !user.role
+          ) {
+            router.replace({
+              pathname: "/profile-setup",
+              params: {
+                userId: user.id,
+                username:
+                  user.username,
+              },
+            });
+
+            return;
+          }
+
+          router.replace("/dashboard");
+        } catch (error) {
+          console.error(
+            "Session check error:",
+            error
+          );
+
+          if (isMounted) {
+            router.replace("/login");
+          }
+        }
+      },
+      3000
     );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+    };
+  }, []);
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+    <SafeAreaView
+      style={styles.safeArea}
+    >
+      <View style={styles.container}>
+        <View style={styles.content}>
+          <View
+            style={styles.logoRow}
+          >
+            <Image
+              source={require("../../assets/images/baybay-logo.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
 
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
+            <Image
+              source={require("../../assets/images/sk-kabunga-an-logo.png")}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+          <Text style={styles.title}>
+            SK KABUNGA-AN
+          </Text>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+          <Text
+            style={styles.subtitle}
+          >
+            Official SK Management &
+            Records App
+          </Text>
+        </View>
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+        <View
+          style={
+            styles.footerContainer
+          }
+        >
+          <Text style={styles.footer}>
+            Local. Secure. Organized.
+          </Text>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
   safeArea: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+    backgroundColor:
+      colors.background,
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
+
+  container: {
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    paddingHorizontal: spacing.xl,
   },
+
+  content: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  logoRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.lg,
+    marginBottom: spacing.xl,
+  },
+
+  logo: {
+    width: 120,
+    height: 120,
+  },
+
   title: {
-    textAlign: 'center',
+    fontSize:
+      typography.fontSize.display,
+    fontWeight:
+      typography.fontWeight.bold,
+    color: colors.text,
+    textAlign: "center",
   },
-  code: {
-    textTransform: 'uppercase',
+
+  subtitle: {
+    marginTop: spacing.sm,
+    fontSize:
+      typography.fontSize.md,
+    fontWeight:
+      typography.fontWeight.medium,
+    color: colors.textSecondary,
+    textAlign: "center",
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+
+  footerContainer: {
+    paddingBottom: spacing.xl,
+    alignItems: "center",
+  },
+
+  footer: {
+    fontSize:
+      typography.fontSize.sm,
+    fontWeight:
+      typography.fontWeight.medium,
+    color: colors.textMuted,
+    textAlign: "center",
   },
 });
