@@ -8,6 +8,7 @@ export type SessionUser = {
   username: string;
   fullName: string | null;
   role: string | null;
+  authorizationLevel: string;
 };
 
 export async function saveSession(
@@ -45,13 +46,15 @@ export async function getCurrentSessionUser():
     username: string;
     full_name: string | null;
     role: string | null;
+    authorization_level: string;
   }>(
     `
       SELECT
         users.id,
         users.username,
         users.full_name,
-        users.role
+        users.role,
+        users.authorization_level
 
       FROM app_session
 
@@ -74,6 +77,8 @@ export async function getCurrentSessionUser():
     username: user.username,
     fullName: user.full_name,
     role: user.role,
+    authorizationLevel:
+      user.authorization_level,
   };
 }
 

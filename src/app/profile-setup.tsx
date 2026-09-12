@@ -1,52 +1,44 @@
 import { Ionicons } from "@expo/vector-icons";
 import {
-    router,
-    useLocalSearchParams,
+  router,
+  useLocalSearchParams,
 } from "expo-router";
 import { useState } from "react";
 import {
-    Image,
-    ImageBackground,
-    KeyboardAvoidingView,
-    Platform,
-    Pressable,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
+  Image,
+  ImageBackground,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { updateLocalProfile } from "../services/auth";
 import {
-    colors,
-    spacing,
-    typography,
+  savePendingFullName,
+  updateLocalProfile,
+} from "../services/auth";
+import {
+  YOUTH_MEMBER_ROLE,
+} from "../services/authorization";
+import {
+  colors,
+  spacing,
+  typography,
 } from "../theme";
 
-const SK_ROLES = [
-  {
-    value: "Chairperson",
-    icon: "person-outline" as const,
-  },
-  {
-    value: "Secretary",
-    icon: "document-text-outline" as const,
-  },
-  {
-    value: "Treasurer",
-    icon: "wallet-outline" as const,
-  },
-  {
-    value: "Kagawad",
-    icon: "people-outline" as const,
-  },
-];
+type AccountType =
+  | "youth_member"
+  | "official"
+  | "";
 
 type ProfileErrors = {
   fullName?: string;
-  role?: string;
+  accountType?: string;
   form?: string;
 };
 
@@ -70,13 +62,8 @@ export default function ProfileSetupScreen() {
   const [fullName, setFullName] =
     useState("");
 
-  const [role, setRole] =
-    useState("");
-
-  const [
-    showRolePicker,
-    setShowRolePicker,
-  ] = useState(false);
+  const [accountType, setAccountType] =
+    useState<AccountType>("");
 
   const [isSaving, setIsSaving] =
     useState(false);
@@ -92,30 +79,6 @@ export default function ProfileSetupScreen() {
       [field]: undefined,
       form: undefined,
     }));
-  }
-
-  function getRoleIcon() {
-    const selectedRole =
-      SK_ROLES.find(
-        (item) =>
-          item.value === role
-      );
-
-    return (
-      selectedRole?.icon ??
-      "briefcase-outline"
-    );
-  }
-
-  function handleSelectRole(
-    selectedRole: string
-  ) {
-    setRole(selectedRole);
-    setShowRolePicker(false);
-
-    if (errors.role) {
-      clearError("role");
-    }
   }
 
   async function handleContinue() {
@@ -140,9 +103,9 @@ export default function ProfileSetupScreen() {
         "Please enter your complete name.";
     }
 
-    if (!role) {
-      newErrors.role =
-        "Please select your SK position.";
+    if (!accountType) {
+      newErrors.accountType =
+        "Please choose your account type.";
     }
 
     if (
@@ -156,15 +119,34 @@ export default function ProfileSetupScreen() {
     try {
       setIsSaving(true);
       setErrors({});
-      setShowRolePicker(false);
 
-      await updateLocalProfile({
+      if (
+        accountType === "youth_member"
+      ) {
+        await updateLocalProfile({
+          userId,
+          fullName: cleanFullName,
+          role: YOUTH_MEMBER_ROLE,
+        });
+
+        router.replace("/home");
+        return;
+      }
+
+      await savePendingFullName({
         userId,
         fullName: cleanFullName,
-        role,
       });
 
-      router.replace("/dashboard");
+      router.replace({
+        pathname:
+          "/official-verification",
+        params: {
+          userId,
+          username,
+          fullName: cleanFullName,
+        },
+      });
     } catch (error) {
       console.error(
         "Profile setup error:",
@@ -219,7 +201,6 @@ export default function ProfileSetupScreen() {
             }
             keyboardShouldPersistTaps="handled"
           >
-            {/* Logo and Header */}
             <View style={styles.header}>
               <Image
                 source={require("../../assets/images/sk-kabunga-an-logo.png")}
@@ -234,19 +215,16 @@ export default function ProfileSetupScreen() {
               <Text
                 style={styles.subtitle}
               >
-                Set up your SK official
-                information
+                Choose how you will use the
+                SK Kabunga-an app
               </Text>
             </View>
 
-            {/* Account */}
             <View
               style={styles.accountCard}
             >
               <View
-                style={
-                  styles.accountIcon
-                }
+                style={styles.accountIcon}
               >
                 <Ionicons
                   name="person-outline"
@@ -256,14 +234,10 @@ export default function ProfileSetupScreen() {
               </View>
 
               <View
-                style={
-                  styles.accountInfo
-                }
+                style={styles.accountInfo}
               >
                 <Text
-                  style={
-                    styles.accountLabel
-                  }
+                  style={styles.accountLabel}
                 >
                   Account
                 </Text>
@@ -280,11 +254,8 @@ export default function ProfileSetupScreen() {
             </View>
 
             <View style={styles.form}>
-              {/* Full Name */}
               <View
-                style={
-                  styles.fieldGroup
-                }
+                style={styles.fieldGroup}
               >
                 <Text
                   style={styles.label}
@@ -310,11 +281,6 @@ export default function ProfileSetupScreen() {
                       );
                     }
                   }}
-                  onFocus={() =>
-                    setShowRolePicker(
-                      false
-                    )
-                  }
                   placeholder="Enter your full name"
                   placeholderTextColor={
                     colors.textMuted
@@ -326,208 +292,209 @@ export default function ProfileSetupScreen() {
 
                 {errors.fullName && (
                   <Text
-                    style={
-                      styles.errorText
-                    }
+                    style={styles.errorText}
                   >
                     {errors.fullName}
                   </Text>
                 )}
               </View>
 
-              {/* SK Position */}
-              <View
-                style={[
-                  styles.roleFieldGroup,
-                  showRolePicker &&
-                    styles.roleFieldGroupOpen,
-                ]}
-              >
-                <Text
-                  style={styles.label}
-                >
-                  SK Position
-                </Text>
+              <Text style={styles.label}>
+                Account Type
+              </Text>
 
+              <Pressable
+                style={({ pressed }) => [
+                  styles.typeCard,
+                  accountType ===
+                    "youth_member" &&
+                    styles.typeCardSelected,
+                  pressed &&
+                    styles.cardPressed,
+                ]}
+                onPress={() => {
+                  setAccountType(
+                    "youth_member"
+                  );
+                  clearError(
+                    "accountType"
+                  );
+                }}
+                disabled={isSaving}
+              >
                 <View
                   style={
-                    styles.dropdownWrapper
+                    styles.typeIcon
                   }
                 >
-                  <Pressable
-                    style={[
-                      styles.roleSelector,
-                      errors.role &&
-                        styles.inputError,
-                      showRolePicker &&
-                        styles.roleSelectorOpen,
-                    ]}
-                    onPress={() => {
-                      setShowRolePicker(
-                        (current) =>
-                          !current
-                      );
-
-                      if (errors.role) {
-                        clearError(
-                          "role"
-                        );
-                      }
-                    }}
-                    disabled={isSaving}
-                  >
-                    <View
-                      style={
-                        styles.roleSelectorLeft
-                      }
-                    >
-                      <Ionicons
-                        name={
-                          getRoleIcon()
-                        }
-                        size={22}
-                        color={
-                          role
-                            ? colors.primary
-                            : colors.textMuted
-                        }
-                      />
-
-                      <Text
-                        numberOfLines={1}
-                        style={[
-                          styles.roleSelectorText,
-                          !role &&
-                            styles.placeholderText,
-                        ]}
-                      >
-                        {role ||
-                          "Select your SK position"}
-                      </Text>
-                    </View>
-
-                    <Ionicons
-                      name={
-                        showRolePicker
-                          ? "chevron-up-outline"
-                          : "chevron-down-outline"
-                      }
-                      size={21}
-                      color={
-                        colors.textSecondary
-                      }
-                    />
-                  </Pressable>
-
-                  {/* Dropdown */}
-                  {showRolePicker && (
-                    <View
-                      style={
-                        styles.dropdownMenu
-                      }
-                    >
-                      {SK_ROLES.map(
-                        (
-                          item,
-                          index
-                        ) => {
-                          const isSelected =
-                            role ===
-                            item.value;
-
-                          return (
-                            <Pressable
-                              key={
-                                item.value
-                              }
-                              style={({
-                                pressed,
-                              }) => [
-                                styles.dropdownOption,
-
-                                index ===
-                                  SK_ROLES.length -
-                                    1 &&
-                                  styles.lastDropdownOption,
-
-                                isSelected &&
-                                  styles.dropdownOptionSelected,
-
-                                pressed &&
-                                  styles.dropdownOptionPressed,
-                              ]}
-                              onPress={() =>
-                                handleSelectRole(
-                                  item.value
-                                )
-                              }
-                            >
-                              <View
-                                style={
-                                  styles.dropdownOptionLeft
-                                }
-                              >
-                                <Ionicons
-                                  name={
-                                    item.icon
-                                  }
-                                  size={
-                                    21
-                                  }
-                                  color={
-                                    isSelected
-                                      ? colors.primary
-                                      : colors.textSecondary
-                                  }
-                                />
-
-                                <Text
-                                  style={[
-                                    styles.dropdownOptionText,
-                                    isSelected &&
-                                      styles.dropdownOptionTextSelected,
-                                  ]}
-                                >
-                                  {
-                                    item.value
-                                  }
-                                </Text>
-                              </View>
-
-                              {isSelected && (
-                                <Ionicons
-                                  name="checkmark"
-                                  size={21}
-                                  color={
-                                    colors.primary
-                                  }
-                                />
-                              )}
-                            </Pressable>
-                          );
-                        }
-                      )}
-                    </View>
-                  )}
+                  <Ionicons
+                    name="people-outline"
+                    size={25}
+                    color={
+                      accountType ===
+                      "youth_member"
+                        ? colors.primary
+                        : colors.textSecondary
+                    }
+                  />
                 </View>
 
-                {errors.role && (
-                  <Text
-                    style={
-                      styles.errorText
-                    }
-                  >
-                    {errors.role}
-                  </Text>
-                )}
-              </View>
-
-              {/* General Error */}
-              {errors.form && (
                 <View
                   style={
-                    styles.formErrorBox
+                    styles.typeContent
                   }
+                >
+                  <Text
+                    style={
+                      styles.typeTitle
+                    }
+                  >
+                    SK Youth Member
+                  </Text>
+
+                  <Text
+                    style={
+                      styles.typeDescription
+                    }
+                  >
+                    Read-only access to
+                    projects, finances and
+                    records made available
+                    for youth members.
+                  </Text>
+                </View>
+
+                <Ionicons
+                  name={
+                    accountType ===
+                    "youth_member"
+                      ? "radio-button-on"
+                      : "radio-button-off"
+                  }
+                  size={22}
+                  color={
+                    accountType ===
+                    "youth_member"
+                      ? colors.primary
+                      : colors.textMuted
+                  }
+                />
+              </Pressable>
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.typeCard,
+                  accountType ===
+                    "official" &&
+                    styles.typeCardSelected,
+                  pressed &&
+                    styles.cardPressed,
+                ]}
+                onPress={() => {
+                  setAccountType(
+                    "official"
+                  );
+                  clearError(
+                    "accountType"
+                  );
+                }}
+                disabled={isSaving}
+              >
+                <View
+                  style={
+                    styles.typeIcon
+                  }
+                >
+                  <Ionicons
+                    name="shield-checkmark-outline"
+                    size={25}
+                    color={
+                      accountType ===
+                      "official"
+                        ? colors.primary
+                        : colors.textSecondary
+                    }
+                  />
+                </View>
+
+                <View
+                  style={
+                    styles.typeContent
+                  }
+                >
+                  <Text
+                    style={
+                      styles.typeTitle
+                    }
+                  >
+                    SK Official
+                  </Text>
+
+                  <Text
+                    style={
+                      styles.typeDescription
+                    }
+                  >
+                    Chairperson, Secretary,
+                    Treasurer or Kagawad.
+                    Official verification is
+                    required before access is
+                    granted.
+                  </Text>
+                </View>
+
+                <Ionicons
+                  name={
+                    accountType ===
+                    "official"
+                      ? "radio-button-on"
+                      : "radio-button-off"
+                  }
+                  size={22}
+                  color={
+                    accountType ===
+                    "official"
+                      ? colors.primary
+                      : colors.textMuted
+                  }
+                />
+              </Pressable>
+
+              {errors.accountType && (
+                <Text
+                  style={[
+                    styles.errorText,
+                    styles.accountTypeError,
+                  ]}
+                >
+                  {errors.accountType}
+                </Text>
+              )}
+
+              <View
+                style={styles.securityNote}
+              >
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={19}
+                  color={colors.textSecondary}
+                />
+
+                <Text
+                  style={
+                    styles.securityNoteText
+                  }
+                >
+                  Official positions can no
+                  longer be selected freely.
+                  A verified authorization is
+                  required.
+                </Text>
+              </View>
+
+              {errors.form && (
+                <View
+                  style={styles.formErrorBox}
                 >
                   <Ionicons
                     name="alert-circle-outline"
@@ -545,19 +512,14 @@ export default function ProfileSetupScreen() {
                 </View>
               )}
 
-              {/* Continue */}
               <Pressable
-                onPress={
-                  handleContinue
-                }
+                onPress={handleContinue}
                 disabled={isSaving}
                 style={({ pressed }) => [
                   styles.continueButton,
-
                   pressed &&
                     !isSaving &&
                     styles.buttonPressed,
-
                   isSaving &&
                     styles.buttonDisabled,
                 ]}
@@ -568,12 +530,11 @@ export default function ProfileSetupScreen() {
                   }
                 >
                   {isSaving
-                    ? "Saving Profile..."
+                    ? "Saving..."
                     : "Continue"}
                 </Text>
               </Pressable>
 
-              {/* Back */}
               <Pressable
                 style={styles.backButton}
                 onPress={() =>
@@ -590,9 +551,7 @@ export default function ProfileSetupScreen() {
                 />
 
                 <Text
-                  style={
-                    styles.backText
-                  }
+                  style={styles.backText}
                 >
                   Back to Sign In
                 </Text>
@@ -600,8 +559,8 @@ export default function ProfileSetupScreen() {
             </View>
 
             <Text style={styles.footer}>
-              Your profile information
-              stays on this device.
+              Your local account remains
+              stored on this device.
             </Text>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -638,14 +597,13 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    width: 120,
-    height: 120,
+    width: 112,
+    height: 112,
     marginBottom: spacing.sm,
   },
 
   title: {
-    fontSize:
-      typography.fontSize.xxl,
+    fontSize: typography.fontSize.xxl,
     fontWeight:
       typography.fontWeight.bold,
     color: colors.text,
@@ -654,8 +612,7 @@ const styles = StyleSheet.create({
 
   subtitle: {
     marginTop: spacing.xs,
-    fontSize:
-      typography.fontSize.md,
+    fontSize: typography.fontSize.md,
     fontWeight:
       typography.fontWeight.medium,
     color: colors.textSecondary,
@@ -692,8 +649,7 @@ const styles = StyleSheet.create({
   },
 
   accountLabel: {
-    fontSize:
-      typography.fontSize.xs,
+    fontSize: typography.fontSize.xs,
     fontWeight:
       typography.fontWeight.medium,
     color: colors.textSecondary,
@@ -701,8 +657,7 @@ const styles = StyleSheet.create({
 
   accountUsername: {
     marginTop: 2,
-    fontSize:
-      typography.fontSize.md,
+    fontSize: typography.fontSize.md,
     fontWeight:
       typography.fontWeight.semibold,
     color: colors.text,
@@ -716,19 +671,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
 
-  roleFieldGroup: {
-    marginBottom: spacing.xl,
-    zIndex: 100,
-  },
-
-  roleFieldGroupOpen: {
-    zIndex: 1000,
-  },
-
   label: {
     marginBottom: spacing.sm,
-    fontSize:
-      typography.fontSize.sm,
+    fontSize: typography.fontSize.sm,
     fontWeight:
       typography.fontWeight.semibold,
     color: colors.text,
@@ -740,129 +685,10 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 14,
     paddingHorizontal: spacing.lg,
-    fontSize:
-      typography.fontSize.md,
+    fontSize: typography.fontSize.md,
     color: colors.text,
     backgroundColor:
       "rgba(255,255,255,0.95)",
-  },
-
-  dropdownWrapper: {
-    position: "relative",
-    zIndex: 1000,
-  },
-
-  roleSelector: {
-    height: 54,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent:
-      "space-between",
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    paddingHorizontal: spacing.lg,
-    backgroundColor:
-      "rgba(255,255,255,0.95)",
-  },
-
-  roleSelectorOpen: {
-    borderColor: colors.primary,
-  },
-
-  roleSelectorLeft: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    marginRight: spacing.sm,
-  },
-
-  roleSelectorText: {
-    flex: 1,
-    marginLeft: spacing.md,
-    fontSize:
-      typography.fontSize.md,
-    color: colors.text,
-  },
-
-  placeholderText: {
-    color: colors.textMuted,
-  },
-
-  dropdownMenu: {
-    position: "absolute",
-    top: 60,
-    left: 0,
-    right: 0,
-
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-
-    backgroundColor: colors.white,
-
-    overflow: "hidden",
-
-    elevation: 10,
-
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-
-    zIndex: 2000,
-  },
-
-  dropdownOption: {
-    minHeight: 55,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent:
-      "space-between",
-    paddingHorizontal: spacing.lg,
-
-    borderBottomWidth: 1,
-    borderBottomColor:
-      colors.border,
-
-    backgroundColor:
-      colors.white,
-  },
-
-  lastDropdownOption: {
-    borderBottomWidth: 0,
-  },
-
-  dropdownOptionSelected: {
-    backgroundColor:
-      "rgba(37,99,235,0.07)",
-  },
-
-  dropdownOptionPressed: {
-    opacity: 0.7,
-  },
-
-  dropdownOptionLeft: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  dropdownOptionText: {
-    flex: 1,
-    marginLeft: spacing.md,
-    fontSize:
-      typography.fontSize.md,
-    color: colors.text,
-  },
-
-  dropdownOptionTextSelected: {
-    color: colors.primary,
-    fontWeight:
-      typography.fontWeight.semibold,
   },
 
   inputError: {
@@ -870,61 +696,133 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
 
+  typeCard: {
+    minHeight: 104,
+    flexDirection: "row",
+    alignItems: "center",
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 16,
+    backgroundColor:
+      "rgba(255,255,255,0.95)",
+  },
+
+  typeCardSelected: {
+    borderColor: colors.primary,
+    borderWidth: 1.5,
+    backgroundColor:
+      "rgba(37,99,235,0.05)",
+  },
+
+  cardPressed: {
+    opacity: 0.72,
+  },
+
+  typeIcon: {
+    width: 42,
+    height: 42,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  typeContent: {
+    flex: 1,
+    marginHorizontal: spacing.md,
+  },
+
+  typeTitle: {
+    fontSize: typography.fontSize.md,
+    fontWeight:
+      typography.fontWeight.semibold,
+    color: colors.text,
+  },
+
+  typeDescription: {
+    marginTop: spacing.xs,
+    fontSize: typography.fontSize.xs,
+    lineHeight: 18,
+    color: colors.textSecondary,
+  },
+
+  accountTypeError: {
+    marginTop: -spacing.xs,
+    marginBottom: spacing.md,
+  },
+
+  securityNote: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    padding: spacing.md,
+    marginTop: spacing.xs,
+    marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    backgroundColor:
+      "rgba(255,255,255,0.8)",
+  },
+
+  securityNoteText: {
+    flex: 1,
+    marginLeft: spacing.sm,
+    fontSize: typography.fontSize.xs,
+    lineHeight: 18,
+    color: colors.textSecondary,
+  },
+
   errorText: {
     marginTop: spacing.xs,
-    fontSize:
-      typography.fontSize.xs,
+    fontSize: typography.fontSize.xs,
     color: colors.danger,
   },
 
   formErrorBox: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginBottom: spacing.lg,
     padding: spacing.md,
-    borderRadius: 12,
+    marginBottom: spacing.lg,
     borderWidth: 1,
     borderColor: colors.danger,
+    borderRadius: 12,
     backgroundColor:
-      "rgba(255,255,255,0.95)",
+      "rgba(220,38,38,0.05)",
   },
 
   formErrorText: {
     flex: 1,
     marginLeft: spacing.sm,
-    fontSize:
-      typography.fontSize.sm,
-    color: colors.danger,
+    fontSize: typography.fontSize.sm,
     lineHeight: 19,
+    color: colors.danger,
   },
 
   continueButton: {
     height: 54,
-    borderRadius: 14,
-    backgroundColor:
-      colors.primary,
     alignItems: "center",
     justifyContent: "center",
+    borderRadius: 14,
+    backgroundColor: colors.primary,
   },
 
   continueButtonText: {
-    fontSize:
-      typography.fontSize.md,
+    fontSize: typography.fontSize.md,
     fontWeight:
       typography.fontWeight.semibold,
     color: colors.white,
   },
 
   buttonPressed: {
-    opacity: 0.85,
+    opacity: 0.82,
   },
 
   buttonDisabled: {
-    opacity: 0.65,
+    opacity: 0.6,
   },
 
   backButton: {
-    height: 44,
+    minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -933,19 +831,16 @@ const styles = StyleSheet.create({
 
   backText: {
     marginLeft: spacing.xs,
-    fontSize:
-      typography.fontSize.sm,
+    fontSize: typography.fontSize.sm,
     fontWeight:
       typography.fontWeight.semibold,
     color: colors.primary,
   },
 
   footer: {
-    marginTop: "auto",
-    paddingTop: spacing.lg,
+    marginTop: spacing.xl,
+    fontSize: typography.fontSize.xs,
+    color: colors.textMuted,
     textAlign: "center",
-    fontSize:
-      typography.fontSize.xs,
-    color: colors.textSecondary,
   },
 });

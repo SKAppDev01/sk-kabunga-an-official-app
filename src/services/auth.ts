@@ -1,6 +1,12 @@
 import * as Crypto from "expo-crypto";
 
 import { getDatabase } from "../database/database";
+import {
+  AUTH_LEVEL_PUBLIC,
+  AUTH_LEVEL_VERIFIED_OFFICIAL,
+  YOUTH_MEMBER_ROLE,
+  isOfficialRole,
+} from "./authorization";
 import { hashPassword, verifyPassword } from "./password";
 
 type CreateAccountInput = {
@@ -28,6 +34,7 @@ type StoredUser = {
   password_salt: string;
   full_name: string | null;
   role: string | null;
+  authorization_level: string;
 };
 
 type RecoveryUser = {
@@ -43,6 +50,7 @@ export type LocalAccount = {
   username: string;
   fullName: string | null;
   role: string | null;
+  authorizationLevel: string;
   createdAt: string;
 };
 
@@ -134,7 +142,8 @@ export async function loginLocalAccount({
           password_hash,
           password_salt,
           full_name,
-          role
+          role,
+          authorization_level
         FROM users
         WHERE username = ? COLLATE NOCASE
           AND is_active = 1
@@ -163,6 +172,8 @@ export async function loginLocalAccount({
     username: user.username,
     fullName: user.full_name,
     role: user.role,
+    authorizationLevel:
+      user.authorization_level,
   };
 }
 
@@ -179,9 +190,14 @@ export async function updateLocalProfile({
   const user =
     await db.getFirstAsync<{
       id: string;
+      role: string | null;
+      authorization_level: string;
     }>(
       `
-        SELECT id
+        SELECT
+          id,
+          role,
+          authorization_level
         FROM users
         WHERE id = ?
           AND is_active = 1
@@ -194,17 +210,39 @@ export async function updateLocalProfile({
     throw new Error("USER_NOT_FOUND");
   }
 
+  if (isOfficialRole(cleanRole)) {
+    if (
+      user.authorization_level !==
+        AUTH_LEVEL_VERIFIED_OFFICIAL
+    ) {
+      throw new Error(
+        "OFFICIAL_AUTHORIZATION_REQUIRED"
+      );
+    }
+  } else if (
+    cleanRole !== YOUTH_MEMBER_ROLE
+  ) {
+    throw new Error("INVALID_ROLE");
+  }
+
   await db.runAsync(
     `
       UPDATE users
       SET
         full_name = ?,
         role = ?,
+        authorization_level = CASE
+          WHEN ? = ? THEN ?
+          ELSE authorization_level
+        END,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `,
     cleanFullName,
     cleanRole,
+    cleanRole,
+    YOUTH_MEMBER_ROLE,
+    AUTH_LEVEL_PUBLIC,
     userId
   );
 
@@ -212,7 +250,54 @@ export async function updateLocalProfile({
     id: userId,
     fullName: cleanFullName,
     role: cleanRole,
+    authorizationLevel:
+      cleanRole === YOUTH_MEMBER_ROLE
+        ? AUTH_LEVEL_PUBLIC
+        : user.authorization_level,
   };
+}
+
+export async function savePendingFullName({
+  userId,
+  fullName,
+}: {
+  userId: string;
+  fullName: string;
+}) {
+  const db = await getDatabase();
+
+  const cleanFullName =
+    fullName.trim();
+
+  if (!cleanFullName) {
+    throw new Error(
+      "FULL_NAME_REQUIRED"
+    );
+  }
+
+  const result = await db.runAsync(
+    `
+      UPDATE users
+      SET
+        full_name = ?,
+        updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+        AND is_active = 1
+    `,
+    cleanFullName,
+    userId
+  );
+
+  if (
+    "changes" in result &&
+    Number(result.changes) === 0
+  ) {
+    throw new Error(
+      "USER_NOT_FOUND"
+    );
+  }
+
+  return true;
 }
 
 export async function getRecoveryQuestion(
@@ -348,6 +433,7 @@ export async function getAllLocalAccounts(): Promise<
       username: string;
       full_name: string | null;
       role: string | null;
+      authorization_level: string;
       created_at: string;
     }>(
       `
@@ -356,6 +442,7 @@ export async function getAllLocalAccounts(): Promise<
           username,
           full_name,
           role,
+          authorization_level,
           created_at
         FROM users
         ORDER BY created_at DESC
@@ -367,6 +454,8 @@ export async function getAllLocalAccounts(): Promise<
     username: user.username,
     fullName: user.full_name,
     role: user.role,
+    authorizationLevel:
+      user.authorization_level,
     createdAt: user.created_at,
   }));
 }
@@ -375,6 +464,25 @@ export async function deleteLocalAccount(
   userId: string
 ) {
   const db = await getDatabase();
+
+  const foundingOrganization =
+    await db.getFirstAsync<{
+      id: string;
+    }>(
+      `
+        SELECT id
+        FROM sk_organization
+        WHERE established_by = ?
+        LIMIT 1
+      `,
+      userId
+    );
+
+  if (foundingOrganization) {
+    throw new Error(
+      "FOUNDING_OFFICIAL_PROTECTED"
+    );
+  }
 
   await db.runAsync(
     `

@@ -8,6 +8,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import {
+  AUTH_LEVEL_VERIFIED_OFFICIAL,
+  isOfficialRole,
+} from "../services/authorization";
 import { getCurrentSessionUser } from "../services/session";
 import {
   colors,
@@ -50,7 +54,26 @@ export default function SplashScreen() {
             return;
           }
 
-          router.replace("/dashboard");
+          if (
+            isOfficialRole(user.role) &&
+            user.authorizationLevel !==
+              AUTH_LEVEL_VERIFIED_OFFICIAL
+          ) {
+            router.replace({
+              pathname:
+                "/official-verification",
+              params: {
+                userId: user.id,
+                username: user.username,
+                fullName:
+                  user.fullName || "",
+              },
+            });
+
+            return;
+          }
+
+          router.replace("/home");
         } catch (error) {
           console.error(
             "Session check error:",
@@ -77,21 +100,33 @@ export default function SplashScreen() {
     >
       <View style={styles.container}>
         <View style={styles.content}>
-          <View
-            style={styles.logoRow}
-          >
+          {/* Official logos */}
+          <View style={styles.officialLogoRow}>
             <Image
               source={require("../../assets/images/baybay-logo.png")}
-              style={styles.logo}
+              style={styles.officialLogo}
               resizeMode="contain"
             />
 
             <Image
-              source={require("../../assets/images/sk-kabunga-an-logo.png")}
-              style={styles.logo}
+              source={require("../../assets/images/barangay-kabunga-an-logo.png")}
+              style={styles.officialLogo}
+              resizeMode="contain"
+            />
+
+            <Image
+              source={require("../../assets/images/sk-kabunga-an-seal.png")}
+              style={styles.officialLogo}
               resizeMode="contain"
             />
           </View>
+
+          {/* Main app logo */}
+          <Image
+            source={require("../../assets/images/sk-kabunga-an-logo.png")}
+            style={styles.appLogo}
+            resizeMode="contain"
+          />
 
           <Text style={styles.title}>
             SK KABUNGA-AN
@@ -111,7 +146,7 @@ export default function SplashScreen() {
           }
         >
           <Text style={styles.footer}>
-            Local. Secure. Organized.
+            Local • Secure • Organized
           </Text>
         </View>
       </View>
@@ -137,17 +172,23 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  logoRow: {
+  officialLogoRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: spacing.lg,
-    marginBottom: spacing.xl,
+    gap: spacing.md,
+    marginBottom: spacing.lg,
   },
 
-  logo: {
-    width: 120,
-    height: 120,
+  officialLogo: {
+    width: 72,
+    height: 72,
+  },
+
+  appLogo: {
+    width: 130,
+    height: 130,
+    marginBottom: spacing.md,
   },
 
   title: {

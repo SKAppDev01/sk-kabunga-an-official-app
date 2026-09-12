@@ -13,6 +13,10 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { loginLocalAccount } from "../services/auth";
+import {
+  AUTH_LEVEL_VERIFIED_OFFICIAL,
+  isOfficialRole,
+} from "../services/authorization";
 import { saveSession } from "../services/session";
 import {
     colors,
@@ -106,8 +110,26 @@ export default function LoginScreen() {
         return;
       }
 
+      if (
+        isOfficialRole(user.role) &&
+        user.authorizationLevel !==
+          AUTH_LEVEL_VERIFIED_OFFICIAL
+      ) {
+        router.replace({
+          pathname: "/official-verification",
+          params: {
+            userId: user.id,
+            username: user.username,
+            fullName:
+              user.fullName || "",
+          },
+        });
+
+        return;
+      }
+
       // Profile is already complete
-      router.replace("/dashboard");
+      router.replace("/home");
     } catch (error) {
       console.error(
         "Sign in error:",

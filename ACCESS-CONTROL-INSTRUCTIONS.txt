@@ -1,0 +1,92 @@
+SK YOUTH MEMBER + READ-ONLY ACCESS CONTROL
+
+WHAT THIS PACKAGE ADDS
+
+1. New account role
+   - SK Youth Member
+
+2. Official roles keep management access
+   - Chairperson
+   - Secretary
+   - Treasurer
+   - Kagawad
+
+3. SK Youth Member access
+   - Home: only summaries from records shared with youth members.
+   - Projects: only projects marked "Visible to SK Youth Members".
+   - Finance: only allocations/expenses marked for youth viewing.
+   - Records: Youth Registry remains private/official-only.
+   - Recent Activity / Activity History is official-only.
+   - Normal member navigation has no add/edit/archive/delete controls.
+
+4. Privacy protections
+   - Expense notes are hidden from youth members.
+   - Receipt photos are hidden from youth members.
+   - Project participants and project-expense management are official-only.
+   - Youth Registry data is official-only.
+   - Budget Category management is official-only.
+   - Write operations are also protected in services, not only hidden in UI.
+
+5. Visibility controls for officials
+   PROJECTS
+   - New Project: visibility switch
+   - Edit Project: visibility switch
+
+   BUDGET ALLOCATIONS
+   - Add Budget Allocation: visibility switch
+   - Existing allocations: inline visibility switch on allocation list
+
+   EXPENSES
+   - Add Expense: visibility switch
+   - Edit Expense: visibility switch
+
+PRIVACY DEFAULT
+Existing Projects, Budget Allocations and Expenses remain PRIVATE by default.
+Officials must explicitly enable youth-member visibility for records to share.
+
+DATABASE
+Schema version: 10 -> 11
+New columns:
+- projects.is_youth_visible
+- budget_allocations.is_youth_visible
+- expenses.is_youth_visible
+Existing data is preserved.
+
+INSTALL
+cd ~/sk-kabunga-an-official-app
+unzip -o ~/storage/downloads/sk-youth-member-access-control.zip
+npx expo start --dev-client -c
+
+NO NEW EAS / DEVELOPMENT BUILD IS REQUIRED.
+
+TEST
+A. Official account
+1. Edit one project and enable Visible to SK Youth Members.
+2. Finance > Budget Allocations: enable visibility for one allocation.
+3. Edit one expense and enable youth-member visibility.
+
+B. Youth Member account
+1. Create another local account.
+2. On Complete Profile choose SK Youth Member.
+3. Sign in and confirm:
+   - no Recent Activity feed
+   - no project + button / Archived Projects / edit/archive/delete actions
+   - only visible projects appear
+   - Finance is read-only and only visible records appear
+   - expense notes and receipt photos are hidden
+   - Youth Registry is not exposed in Records
+
+C. Privacy test
+Turn a visibility switch OFF as an official, then sign back in as the member.
+The record should disappear from the member view.
+
+AFTER TESTING
+git add .
+git commit -m "Add SK Youth Member read-only access"
+git push
+
+SECURITY NOTE
+This enforces permissions for accounts whose saved role is SK Youth Member.
+The current profile setup still lets a newly created local account choose its
+own role. A stronger official-role approval/Admin PIN flow should be added in
+the Security & Audit phase before treating role selection as tamper-resistant.
