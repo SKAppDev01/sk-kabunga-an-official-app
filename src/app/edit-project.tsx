@@ -1,3 +1,6 @@
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import {
   router,
@@ -66,6 +69,43 @@ function isValidDateText(value: string) {
   );
 }
 
+function parseProjectDate(value: string) {
+  if (!isValidDateText(value)) {
+    return null;
+  }
+
+  const [year, month, day] =
+    value.split("-").map(Number);
+
+  return new Date(year, month - 1, day);
+}
+
+function toIsoDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(
+    date.getMonth() + 1
+  ).padStart(2, "0");
+  const day = String(
+    date.getDate()
+  ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function formatProjectDate(value: string) {
+  const date = parseProjectDate(value);
+
+  if (!date) {
+    return "Select date";
+  }
+
+  return date.toLocaleDateString("en-PH", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 export default function EditProjectScreen() {
   const params =
     useLocalSearchParams<{
@@ -86,6 +126,10 @@ export default function EditProjectScreen() {
     useState("");
   const [endDate, setEndDate] =
     useState("");
+  const [showStartDatePicker, setShowStartDatePicker] =
+    useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] =
+    useState(false);
   const [status, setStatus] =
     useState<ProjectStatus>("Planned");
   const [isYouthVisible, setIsYouthVisible] =
@@ -176,6 +220,52 @@ export default function EditProjectScreen() {
       [field]: undefined,
       form: undefined,
     }));
+  }
+
+  function openStartDatePicker() {
+    setIsStatusOpen(false);
+    setShowEndDatePicker(false);
+    setShowStartDatePicker(true);
+  }
+
+  function openEndDatePicker() {
+    setIsStatusOpen(false);
+    setShowStartDatePicker(false);
+    setShowEndDatePicker(true);
+  }
+
+  function handleStartDateChange(
+    event: DateTimePickerEvent,
+    selectedDate?: Date
+  ) {
+    setShowStartDatePicker(false);
+
+    if (
+      event.type === "dismissed" ||
+      !selectedDate
+    ) {
+      return;
+    }
+
+    setStartDate(toIsoDate(selectedDate));
+    clearError("startDate");
+  }
+
+  function handleEndDateChange(
+    event: DateTimePickerEvent,
+    selectedDate?: Date
+  ) {
+    setShowEndDatePicker(false);
+
+    if (
+      event.type === "dismissed" ||
+      !selectedDate
+    ) {
+      return;
+    }
+
+    setEndDate(toIsoDate(selectedDate));
+    clearError("endDate");
   }
 
   async function handleSave() {
@@ -484,12 +574,14 @@ export default function EditProjectScreen() {
                   Start Date
                 </Text>
 
-                <View
+                <Pressable
                   style={[
                     styles.dateInputContainer,
                     errors.startDate &&
                       styles.inputError,
                   ]}
+                  onPress={openStartDatePicker}
+                  disabled={isSaving}
                 >
                   <Ionicons
                     name="calendar-outline"
@@ -497,25 +589,17 @@ export default function EditProjectScreen() {
                     color={colors.textMuted}
                   />
 
-                  <TextInput
-                    style={styles.dateInput}
-                    value={startDate}
-                    onChangeText={(text) => {
-                      setStartDate(text);
-
-                      if (errors.startDate) {
-                        clearError("startDate");
-                      }
-                    }}
-                    placeholder="YYYY-MM-DD"
-                    placeholderTextColor={
-                      colors.textMuted
-                    }
-                    keyboardType="numbers-and-punctuation"
-                    maxLength={10}
-                    editable={!isSaving}
-                  />
-                </View>
+                  <Text
+                    style={[
+                      styles.dateInput,
+                      !startDate &&
+                        styles.datePlaceholder,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {formatProjectDate(startDate)}
+                  </Text>
+                </Pressable>
 
                 {errors.startDate && (
                   <Text style={styles.errorText}>
@@ -531,12 +615,14 @@ export default function EditProjectScreen() {
                   End Date
                 </Text>
 
-                <View
+                <Pressable
                   style={[
                     styles.dateInputContainer,
                     errors.endDate &&
                       styles.inputError,
                   ]}
+                  onPress={openEndDatePicker}
+                  disabled={isSaving}
                 >
                   <Ionicons
                     name="calendar-outline"
@@ -544,25 +630,17 @@ export default function EditProjectScreen() {
                     color={colors.textMuted}
                   />
 
-                  <TextInput
-                    style={styles.dateInput}
-                    value={endDate}
-                    onChangeText={(text) => {
-                      setEndDate(text);
-
-                      if (errors.endDate) {
-                        clearError("endDate");
-                      }
-                    }}
-                    placeholder="YYYY-MM-DD"
-                    placeholderTextColor={
-                      colors.textMuted
-                    }
-                    keyboardType="numbers-and-punctuation"
-                    maxLength={10}
-                    editable={!isSaving}
-                  />
-                </View>
+                  <Text
+                    style={[
+                      styles.dateInput,
+                      !endDate &&
+                        styles.datePlaceholder,
+                    ]}
+                    numberOfLines={1}
+                  >
+                    {formatProjectDate(endDate)}
+                  </Text>
+                </Pressable>
 
                 {errors.endDate && (
                   <Text style={styles.errorText}>
@@ -573,7 +651,7 @@ export default function EditProjectScreen() {
             </View>
 
             <Text style={styles.dateHint}>
-              Dates are optional. Use YYYY-MM-DD.
+              Dates are optional. Tap a field to choose a date.
             </Text>
 
             <View
@@ -706,6 +784,35 @@ export default function EditProjectScreen() {
             </Pressable>
           </ScrollView>
         )}
+
+        {showStartDatePicker && (
+          <DateTimePicker
+            value={
+              parseProjectDate(startDate) ??
+              new Date()
+            }
+            mode="date"
+            display="default"
+            onChange={handleStartDateChange}
+          />
+        )}
+
+        {showEndDatePicker && (
+          <DateTimePicker
+            value={
+              parseProjectDate(endDate) ??
+              parseProjectDate(startDate) ??
+              new Date()
+            }
+            mode="date"
+            display="default"
+            minimumDate={
+              parseProjectDate(startDate) ??
+              undefined
+            }
+            onChange={handleEndDateChange}
+          />
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -716,7 +823,7 @@ const styles = StyleSheet.create({
 
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
 
   header: {
@@ -785,7 +892,8 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
 
-  scrollView: { flex: 1 },
+  scrollView: {
+    backgroundColor: "#E3F2FD", flex: 1 },
 
   content: {
     padding: spacing.xl,
@@ -820,6 +928,7 @@ const styles = StyleSheet.create({
   },
 
   input: {
+    elevation: 2,
     minHeight: 54,
     borderWidth: 1,
     borderColor: colors.border,
@@ -865,6 +974,7 @@ const styles = StyleSheet.create({
   },
 
   budgetContainer: {
+    elevation: 2,
     height: 54,
     flexDirection: "row",
     alignItems: "center",
@@ -900,6 +1010,7 @@ const styles = StyleSheet.create({
   dateSpacer: { width: spacing.md },
 
   dateInputContainer: {
+    elevation: 2,
     height: 54,
     flexDirection: "row",
     alignItems: "center",
@@ -912,10 +1023,14 @@ const styles = StyleSheet.create({
 
   dateInput: {
     flex: 1,
-    height: "100%",
+    minWidth: 0,
     marginLeft: spacing.sm,
     fontSize: typography.fontSize.sm,
     color: colors.text,
+  },
+
+  datePlaceholder: {
+    color: colors.textMuted,
   },
 
   dateHint: {
@@ -969,6 +1084,7 @@ const styles = StyleSheet.create({
   },
 
   statusDropdownMenu: {
+    elevation: 2,
     marginTop: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,

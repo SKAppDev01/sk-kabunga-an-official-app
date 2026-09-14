@@ -448,7 +448,7 @@ export default function ActivityParticipantsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
   flex: {
     flex: 1,
@@ -497,6 +497,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   summaryCount: {
+    elevation: 3,
     minWidth: 28,
     height: 28,
     textAlign: "center",
@@ -509,6 +510,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#EFF6FF",
   },
   addPanel: {
+    elevation: 3,
     margin: spacing.lg,
     padding: spacing.md,
     borderWidth: 1,

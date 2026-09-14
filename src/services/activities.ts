@@ -10,6 +10,9 @@ import {
 import {
   recordAppActivity,
 } from "./app-activity";
+import {
+  getYouthById,
+} from "./youth";
 
 export type ActivityStatus =
   | "Planned"
@@ -481,15 +484,19 @@ export async function getActivityParticipants(
 
 export async function addActivityParticipant({
   activityId,
+  youthId,
   participantName,
   contactNumber,
   notes,
+  attendanceStatus = "Not Marked",
   createdBy,
 }: {
   activityId: string;
+  youthId?: string;
   participantName: string;
   contactNumber?: string;
   notes?: string;
+  attendanceStatus?: ActivityAttendanceStatus;
   createdBy?: string;
 }) {
   await requireOfficialAccess();
@@ -519,13 +526,15 @@ export async function addActivityParticipant({
         attendance_status,
         created_by
       )
-      VALUES (?, ?, NULL, ?, ?, ?, 'Not Marked', ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `,
     id,
     activityId,
+    youthId?.trim() || null,
     cleanName,
     contactNumber?.trim() || null,
     notes?.trim() || null,
+    attendanceStatus,
     createdBy?.trim() || null
   );
 
@@ -544,6 +553,137 @@ export async function addActivityParticipant({
   });
 
   return id;
+}
+
+export async function markYouthPresentAtActivity({
+  activityId,
+  youthId,
+  createdBy,
+}: {
+  activityId: string;
+  youthId: string;
+  createdBy?: string;
+}): Promise<
+  "created" |
+  "updated" |
+  "already-present"
+> {
+  await requireOfficialAccess();
+  await initializeDatabase();
+  const db = await getDatabase();
+
+  const youth =
+    await getYouthById(youthId);
+
+  if (!youth) {
+    throw new Error("YOUTH_NOT_FOUND");
+  }
+
+  const existing =
+    await db.getFirstAsync<{
+      id: string;
+      youth_id: string | null;
+      attendance_status: string;
+    }>(
+      `
+        SELECT
+          id,
+          youth_id,
+          attendance_status
+        FROM activity_participants
+        WHERE activity_id = ?
+          AND (
+            youth_id = ?
+            OR (
+              youth_id IS NULL
+              AND participant_name = ? COLLATE NOCASE
+            )
+          )
+        ORDER BY
+          CASE WHEN youth_id = ? THEN 0 ELSE 1 END
+        LIMIT 1
+      `,
+      activityId,
+      youthId,
+      youth.fullName,
+      youthId
+    );
+
+  if (existing) {
+    if (
+      normalizeAttendanceStatus(
+        existing.attendance_status
+      ) === "Present"
+    ) {
+      if (existing.youth_id !== youthId) {
+        await db.runAsync(
+          `
+            UPDATE activity_participants
+            SET
+              youth_id = ?,
+              participant_name = ?,
+              contact_number = ?,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `,
+          youthId,
+          youth.fullName,
+          youth.contactNumber,
+          existing.id
+        );
+
+        await touchActivity(activityId);
+      }
+
+      return "already-present";
+    }
+
+    await db.runAsync(
+      `
+        UPDATE activity_participants
+        SET
+          youth_id = ?,
+          participant_name = ?,
+          contact_number = ?,
+          attendance_status = 'Present',
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `,
+      youthId,
+      youth.fullName,
+      youth.contactNumber,
+      existing.id
+    );
+
+    await touchActivity(activityId);
+
+    await recordAppActivity({
+      actionType:
+        "activity_attendance_updated",
+      entityType:
+        "activity_participant",
+      entityId: existing.id,
+      subject: youth.fullName,
+      detail:
+        "Attendance marked Present by Profile QR",
+      userId:
+        createdBy?.trim() || null,
+    });
+
+    return "updated";
+  }
+
+  await addActivityParticipant({
+    activityId,
+    youthId,
+    participantName: youth.fullName,
+    contactNumber:
+      youth.contactNumber || undefined,
+    attendanceStatus: "Present",
+    createdBy,
+  });
+
+  return "created";
 }
 
 export async function deleteActivityParticipant(

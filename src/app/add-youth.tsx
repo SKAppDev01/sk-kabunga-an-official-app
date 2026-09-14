@@ -1,8 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker, {
-  DateTimePickerEvent,
+  type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
-import { router } from "expo-router";
+import {
+  router,
+  useLocalSearchParams,
+} from "expo-router";
 import { useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -37,7 +40,60 @@ type FormErrors = {
 const SEX_OPTIONS = [
   "Male",
   "Female",
+  "Prefer not to say",
 ];
+
+type AddYouthParams = {
+  profileId?: string | string[];
+  fullName?: string | string[];
+  birthday?: string | string[];
+  sex?: string | string[];
+  purokSitio?: string | string[];
+  education?: string | string[];
+  employmentStatus?: string | string[];
+  youthClassification?: string | string[];
+};
+
+function readParam(
+  value?: string | string[]
+) {
+  return (
+    Array.isArray(value)
+      ? value[0]
+      : value
+  )?.trim() || "";
+}
+
+function parseStorageDate(
+  value: string
+) {
+  const match = value.match(
+    /^(\d{4})-(\d{2})-(\d{2})$/
+  );
+
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(
+    year,
+    month - 1,
+    day
+  );
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
 
 function formatDateForStorage(
   value: Date
@@ -67,28 +123,50 @@ function formatDateForDisplay(
 }
 
 export default function AddYouthScreen() {
+  const params =
+    useLocalSearchParams<AddYouthParams>();
+
+  const profileId =
+    readParam(params.profileId);
+
   const [fullName, setFullName] =
-    useState("");
+    useState(() =>
+      readParam(params.fullName)
+    );
   const [birthday, setBirthday] =
-    useState<Date | null>(null);
+    useState<Date | null>(() =>
+      parseStorageDate(
+        readParam(params.birthday)
+      )
+    );
   const [sex, setSex] =
-    useState("");
+    useState(() =>
+      readParam(params.sex)
+    );
   const [purokSitio, setPurokSitio] =
-    useState("");
+    useState(() =>
+      readParam(params.purokSitio)
+    );
   const [
     contactNumber,
     setContactNumber,
   ] = useState("");
   const [education, setEducation] =
-    useState("");
+    useState(() =>
+      readParam(params.education)
+    );
   const [
     employmentStatus,
     setEmploymentStatus,
-  ] = useState("");
+  ] = useState(() =>
+    readParam(params.employmentStatus)
+  );
   const [
     youthClassification,
     setYouthClassification,
-  ] = useState("");
+  ] = useState(() =>
+    readParam(params.youthClassification)
+  );
 
   const [showDatePicker, setShowDatePicker] =
     useState(false);
@@ -110,20 +188,20 @@ export default function AddYouthScreen() {
   }
 
   function handleBirthdayValueChange(
-    _event: DateTimePickerEvent,
+    event: DateTimePickerEvent,
     selectedDate?: Date
   ) {
-    if (!selectedDate) {
+    setShowDatePicker(false);
+
+    if (
+      event.type === "dismissed" ||
+      !selectedDate
+    ) {
       return;
     }
 
     setBirthday(selectedDate);
     clearError("birthday");
-    setShowDatePicker(false);
-  }
-
-  function handleBirthdayDismiss() {
-    setShowDatePicker(false);
   }
 
   async function handleSave() {
@@ -151,6 +229,7 @@ export default function AddYouthScreen() {
       }
 
       await createYouthRecord({
+        profileId,
         fullName: cleanName,
         birthday: birthday
           ? formatDateForStorage(
@@ -186,6 +265,18 @@ export default function AddYouthScreen() {
         setErrors({
           birthday:
             "Please choose a valid birthday.",
+        });
+        return;
+      }
+
+      if (
+        message.includes(
+          "PROFILE_ALREADY_REGISTERED"
+        )
+      ) {
+        setErrors({
+          form:
+            "This Profile QR is already linked to a Youth Registry record.",
         });
         return;
       }
@@ -248,8 +339,9 @@ export default function AddYouthScreen() {
           </Text>
 
           <Text style={styles.introText}>
-            Add a youth record to the local SK Youth
-            Registry.
+            {profileId
+              ? "Review the information scanned from the Profile QR before saving it to the Youth Registry."
+              : "Add a youth record to the local SK Youth Registry."}
           </Text>
 
           <View style={styles.fieldGroup}>
@@ -373,12 +465,7 @@ export default function AddYouthScreen() {
                 mode="date"
                 display="default"
                 maximumDate={new Date()}
-                onValueChange={
-                  handleBirthdayValueChange
-                }
-                onDismiss={
-                  handleBirthdayDismiss
-                }
+                onChange={handleBirthdayValueChange}
               />
             )}
           </View>
@@ -611,7 +698,7 @@ const styles = StyleSheet.create({
 
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
 
   header: {
@@ -644,6 +731,7 @@ const styles = StyleSheet.create({
   },
 
   scrollView: {
+    backgroundColor: "#E3F2FD",
     flex: 1,
   },
 
@@ -680,6 +768,7 @@ const styles = StyleSheet.create({
   },
 
   input: {
+    elevation: 2,
     minHeight: 54,
     borderWidth: 1,
     borderColor: colors.border,
@@ -691,6 +780,7 @@ const styles = StyleSheet.create({
   },
 
   selector: {
+    elevation: 2,
     minHeight: 54,
     flexDirection: "row",
     alignItems: "center",
@@ -721,6 +811,7 @@ const styles = StyleSheet.create({
   },
 
   dropdownMenu: {
+    elevation: 2,
     marginTop: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,

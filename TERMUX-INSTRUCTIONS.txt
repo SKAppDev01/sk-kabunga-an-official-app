@@ -1,52 +1,18 @@
-PHASE 13 — REPORTS PERMISSION SYNTAX FIX
+ROLLBACK: Home modernization
 
-ERROR FIXED
+This restores the UI state from immediately before home-modernized.zip.
 
-Unexpected token, expected ";"
-src/services/reports.ts line 66
-
-CAUSE
-
-The previous role-permission patch inserted:
-
-await requireOfficialAccess();
-
-inside the TypeScript return type of getProjectsReport():
-
-Promise<{
-  await requireOfficialAccess();   <-- invalid
-  rows: ...
-}>
-
-That is invalid TypeScript.
-
-FIX
-
-The permission check is now correctly inside the function body:
-
-export async function getProjectsReport(): Promise<{
-  rows: ProjectReportRow[];
-  summary: ProjectsReportSummary;
-}> {
-  await requireOfficialAccess();
-  await initializeDatabase();
-  ...
-}
-
-The second report entry point, getGeneratedReport(), keeps its valid
-service-layer permission check.
-
-ONLY FILE CHANGED
-src/services/reports.ts
-
-No report calculations or report data were changed.
-No role/security rules were removed.
-
-INSTALL
+Run in Termux:
 
 cd ~/sk-kabunga-an-official-app
-unzip -o ~/storage/downloads/phase13-reports-permission-syntax-fix.zip
+unzip -o ~/storage/downloads/home-modernization-rollback.zip
+npx tsc --noEmit
+
+If TypeScript is clean:
+
 npx expo start --dev-client -c
 
-NO npm install.
-NO EAS rebuild.
+Restored files:
+- src/app/(tabs)/home.tsx
+- src/app/upcoming-events.tsx
+- src/app/activity-history.tsx

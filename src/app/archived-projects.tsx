@@ -219,7 +219,7 @@ export default function ArchivedProjectsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
 
   header: {
@@ -299,6 +299,7 @@ const styles = StyleSheet.create({
   },
 
   projectCard: {
+    elevation: 3,
     padding: spacing.lg,
     marginBottom: spacing.md,
     borderWidth: 1,

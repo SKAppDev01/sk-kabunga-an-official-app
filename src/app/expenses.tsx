@@ -375,7 +375,7 @@ export default function ExpensesScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
 
   header: {
@@ -408,6 +408,7 @@ const styles = StyleSheet.create({
   },
 
   screen: {
+    backgroundColor: "#E3F2FD",
     flex: 1,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.lg,
@@ -422,6 +423,15 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 18,
     backgroundColor: colors.white,
+
+    elevation: 3,
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
 
   summaryIcon: {
@@ -532,6 +542,15 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 18,
     backgroundColor: colors.white,
+
+    elevation: 3,
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
 
   expenseCardPressed: {

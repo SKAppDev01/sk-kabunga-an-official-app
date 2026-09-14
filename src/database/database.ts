@@ -240,6 +240,7 @@ async function runDatabaseInitialization() {
 
     CREATE TABLE IF NOT EXISTS youth (
       id TEXT PRIMARY KEY NOT NULL,
+      profile_id TEXT,
       full_name TEXT NOT NULL,
       birthday TEXT,
       sex TEXT,
@@ -290,6 +291,7 @@ async function runDatabaseInitialization() {
     CREATE TABLE IF NOT EXISTS meeting_attendance (
       id TEXT PRIMARY KEY NOT NULL,
       meeting_id TEXT NOT NULL,
+      youth_id TEXT,
       attendee_name TEXT NOT NULL,
       attendee_role TEXT,
       attendance_status TEXT NOT NULL DEFAULT 'Present',
@@ -300,6 +302,10 @@ async function runDatabaseInitialization() {
       FOREIGN KEY (meeting_id)
         REFERENCES meetings(id)
         ON DELETE CASCADE,
+
+      FOREIGN KEY (youth_id)
+        REFERENCES youth(id)
+        ON DELETE SET NULL,
 
       FOREIGN KEY (created_by)
         REFERENCES users(id)
@@ -323,6 +329,10 @@ async function runDatabaseInitialization() {
       FOREIGN KEY (meeting_id)
         REFERENCES meetings(id)
         ON DELETE CASCADE,
+
+      FOREIGN KEY (youth_id)
+        REFERENCES youth(id)
+        ON DELETE SET NULL,
 
       FOREIGN KEY (created_by)
         REFERENCES users(id)
@@ -640,6 +650,32 @@ async function runDatabaseInitialization() {
 
   await addColumnIfMissing(
     db,
+    "youth",
+    "profile_id",
+    "profile_id TEXT"
+  );
+
+  await db.execAsync(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_youth_profile_id
+      ON youth(profile_id)
+      WHERE profile_id IS NOT NULL AND profile_id <> '';
+  `);
+
+  await addColumnIfMissing(
+    db,
+    "meeting_attendance",
+    "youth_id",
+    "youth_id TEXT"
+  );
+
+  await db.execAsync(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_meeting_attendance_youth
+      ON meeting_attendance(meeting_id, youth_id)
+      WHERE youth_id IS NOT NULL AND youth_id <> '';
+  `);
+
+  await addColumnIfMissing(
+    db,
     "expenses",
     "activity_id",
     "activity_id TEXT"
@@ -757,7 +793,7 @@ async function runDatabaseInitialization() {
         updated_at = CURRENT_TIMESTAMP
     `,
     "schema_version",
-    "21"
+    "22"
   );
 
   console.log(

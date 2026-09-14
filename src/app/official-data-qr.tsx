@@ -566,8 +566,7 @@ export default function OfficialDataQrScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor:
-      colors.background,
+    backgroundColor: "#E3F2FD",
   },
   header: {
     height: 60,
@@ -633,6 +632,7 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   errorBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.xl,
@@ -650,6 +650,7 @@ const styles = StyleSheet.create({
     color: colors.danger,
   },
   summaryBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "center",
     justifyContent:
@@ -733,6 +734,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
   },
   qrBackground: {
+    elevation: 3,
     padding: 12,
     borderWidth: 1,
     borderColor: colors.border,
@@ -758,6 +760,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   noticeBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.xl,
@@ -776,6 +779,7 @@ const styles = StyleSheet.create({
       colors.textSecondary,
   },
   warningBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.xl,
@@ -811,6 +815,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   securityBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.xl,
@@ -829,6 +834,7 @@ const styles = StyleSheet.create({
       colors.textSecondary,
   },
   infoBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.md,
@@ -844,5 +850,8 @@ const styles = StyleSheet.create({
       typography.fontSize.xs,
     lineHeight: 18,
     color: colors.textMuted,
+  },
+  pressed: {
+    opacity: 0.7,
   },
 });

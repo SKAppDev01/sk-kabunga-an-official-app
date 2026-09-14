@@ -1,0 +1,96 @@
+SK Kabunga-an — #E3F2FD Sub-screen Theme Sweep
+
+Theme files updated:
+  - src/theme/colors.ts
+
+Sub-screens directly updated: 66
+  - src/app/activities.tsx
+  - src/app/activity-attendance.tsx
+  - src/app/activity-details.tsx
+  - src/app/activity-expenses.tsx
+  - src/app/activity-history.tsx
+  - src/app/activity-participants.tsx
+  - src/app/activity-summary.tsx
+  - src/app/add-budget-allocation.tsx
+  - src/app/add-budget-category.tsx
+  - src/app/add-document.tsx
+  - src/app/add-expense.tsx
+  - src/app/add-inventory-item.tsx
+  - src/app/add-project-expense.tsx
+  - src/app/add-project-participant.tsx
+  - src/app/add-youth.tsx
+  - src/app/app-settings.tsx
+  - src/app/archived-projects.tsx
+  - src/app/backup-data.tsx
+  - src/app/budget-allocations.tsx
+  - src/app/budget-balance.tsx
+  - src/app/budget-categories.tsx
+  - src/app/create-activity.tsx
+  - src/app/create-meeting.tsx
+  - src/app/dashboard.tsx
+  - src/app/data-management.tsx
+  - src/app/data-transfer-history.tsx
+  - src/app/document-details.tsx
+  - src/app/documents.tsx
+  - src/app/edit-document.tsx
+  - src/app/edit-expense.tsx
+  - src/app/edit-project.tsx
+  - src/app/edit-youth.tsx
+  - src/app/expense-details.tsx
+  - src/app/expenses.tsx
+  - src/app/export-data.tsx
+  - src/app/founding-official-setup.tsx
+  - src/app/import-data.tsx
+  - src/app/inventory-borrow.tsx
+  - src/app/inventory-condition.tsx
+  - src/app/inventory-history.tsx
+  - src/app/inventory-item-details.tsx
+  - src/app/inventory-quantity.tsx
+  - src/app/inventory-return.tsx
+  - src/app/inventory.tsx
+  - src/app/meeting-agenda.tsx
+  - src/app/meeting-attendance.tsx
+  - src/app/meeting-details.tsx
+  - src/app/meeting-minutes.tsx
+  - src/app/meeting-resolutions.tsx
+  - src/app/meetings.tsx
+  - src/app/new-project.tsx
+  - src/app/official-data-qr.tsx
+  - src/app/official-verification.tsx
+  - src/app/project-details.tsx
+  - src/app/project-expenses.tsx
+  - src/app/project-participants.tsx
+  - src/app/public-data-qr.tsx
+  - src/app/receive-data-qr.tsx
+  - src/app/report-viewer.tsx
+  - src/app/reports.tsx
+  - src/app/restore-data.tsx
+  - src/app/security-audit.tsx
+  - src/app/upcoming-events.tsx
+  - src/app/youth-profile.tsx
+  - src/app/youth-registry.tsx
+  - src/app/youth-statistics.tsx
+
+Sub-screens already compatible / no direct root patch needed: 1
+  - src/app/projects-report.tsx
+
+Intentionally skipped:
+  - src/app/(tabs)/_layout.tsx — layout
+  - src/app/(tabs)/finance.tsx — main tab already themed
+  - src/app/(tabs)/home.tsx — main tab already themed
+  - src/app/(tabs)/more.tsx — main tab already themed
+  - src/app/(tabs)/projects.tsx — main tab already themed
+  - src/app/(tabs)/records.tsx — main tab already themed
+  - src/app/_layout.tsx — layout
+  - src/app/index.tsx — auth/splash screen
+  - src/app/login.tsx — auth/splash screen
+  - src/app/profile-setup.tsx — auth/splash screen
+  - src/app/recovery.tsx — auth/splash screen
+  - src/app/register.tsx — auth/splash screen
+
+Notes:
+  - Global app background is #E3F2FD
+  - White cards/forms remain white
+  - Main tabs remain unchanged
+  - Login/Register/Recovery/Splash stay on their dedicated branding
+  - Camera/QR scanner preview stays camera/dark

@@ -10,6 +10,9 @@ import {
 import {
   recordAppActivity,
 } from "./app-activity";
+import {
+  getYouthById,
+} from "./youth";
 
 export type MeetingStatus =
   | "Scheduled"
@@ -307,6 +310,7 @@ export type AttendanceStatus =
 export type MeetingAttendanceRecord = {
   id: string;
   meetingId: string;
+  youthId: string | null;
   attendeeName: string;
   attendeeRole: string | null;
   attendanceStatus: AttendanceStatus;
@@ -318,6 +322,7 @@ export type MeetingAttendanceRecord = {
 type MeetingAttendanceRow = {
   id: string;
   meeting_id: string;
+  youth_id: string | null;
   attendee_name: string;
   attendee_role: string | null;
   attendance_status: string;
@@ -393,6 +398,7 @@ function mapAttendanceRow(
   return {
     id: row.id,
     meetingId: row.meeting_id,
+    youthId: row.youth_id,
     attendeeName: row.attendee_name,
     attendeeRole: row.attendee_role,
     attendanceStatus:
@@ -460,6 +466,75 @@ async function getMeetingAuditTitle(
     );
 
   return row?.title || "Meeting";
+}
+
+export async function updateMeetingStatus(
+  meetingId: string,
+  status: MeetingStatus
+) {
+  await requireOfficialAccess();
+  await initializeDatabase();
+
+  const cleanId =
+    meetingId.trim();
+
+  if (!cleanId) {
+    throw new Error(
+      "MEETING_NOT_FOUND"
+    );
+  }
+
+  const db =
+    await getDatabase();
+
+  const meeting =
+    await db.getFirstAsync<{
+      title: string;
+    }>(
+      `
+        SELECT title
+        FROM meetings
+        WHERE id = ?
+        LIMIT 1
+      `,
+      cleanId
+    );
+
+  if (!meeting) {
+    throw new Error(
+      "MEETING_NOT_FOUND"
+    );
+  }
+
+  const result =
+    await db.runAsync(
+      `
+        UPDATE meetings
+        SET
+          status = ?,
+          updated_at =
+            CURRENT_TIMESTAMP
+        WHERE id = ?
+      `,
+      status,
+      cleanId
+    );
+
+  if (result.changes === 0) {
+    throw new Error(
+      "MEETING_NOT_FOUND"
+    );
+  }
+
+  await recordAppActivity({
+    actionType:
+      "meeting_status_updated",
+    entityType: "meeting",
+    entityId: cleanId,
+    subject: meeting.title,
+    detail:
+      `Meeting status: ${status}`,
+  });
 }
 
 export async function updateMeetingAgenda(
@@ -553,6 +628,7 @@ export async function getMeetingAttendance(
         SELECT
           id,
           meeting_id,
+          youth_id,
           attendee_name,
           attendee_role,
           attendance_status,
@@ -575,12 +651,14 @@ export async function getMeetingAttendance(
 
 export async function addMeetingAttendance({
   meetingId,
+  youthId,
   attendeeName,
   attendeeRole,
   attendanceStatus = "Present",
   createdBy,
 }: {
   meetingId: string;
+  youthId?: string;
   attendeeName: string;
   attendeeRole?: string;
   attendanceStatus?: AttendanceStatus;
@@ -606,15 +684,17 @@ export async function addMeetingAttendance({
       INSERT INTO meeting_attendance (
         id,
         meeting_id,
+        youth_id,
         attendee_name,
         attendee_role,
         attendance_status,
         created_by
       )
-      VALUES (?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `,
     id,
     meetingId,
+    youthId?.trim() || null,
     cleanName,
     attendeeRole?.trim() || null,
     attendanceStatus,
@@ -639,6 +719,131 @@ export async function addMeetingAttendance({
   });
 
   return id;
+}
+
+export async function markYouthPresentAtMeeting({
+  meetingId,
+  youthId,
+  createdBy,
+}: {
+  meetingId: string;
+  youthId: string;
+  createdBy?: string;
+}): Promise<
+  "created" |
+  "updated" |
+  "already-present"
+> {
+  await requireOfficialAccess();
+  await initializeDatabase();
+  const db = await getDatabase();
+
+  const youth =
+    await getYouthById(youthId);
+
+  if (!youth) {
+    throw new Error("YOUTH_NOT_FOUND");
+  }
+
+  const existing =
+    await db.getFirstAsync<{
+      id: string;
+      youth_id: string | null;
+      attendance_status: string;
+    }>(
+      `
+        SELECT
+          id,
+          youth_id,
+          attendance_status
+        FROM meeting_attendance
+        WHERE meeting_id = ?
+          AND (
+            youth_id = ?
+            OR (
+              youth_id IS NULL
+              AND attendee_name = ? COLLATE NOCASE
+            )
+          )
+        ORDER BY
+          CASE WHEN youth_id = ? THEN 0 ELSE 1 END
+        LIMIT 1
+      `,
+      meetingId,
+      youthId,
+      youth.fullName,
+      youthId
+    );
+
+  if (existing) {
+    if (
+      normalizeAttendanceStatus(
+        existing.attendance_status
+      ) === "Present"
+    ) {
+      if (existing.youth_id !== youthId) {
+        await db.runAsync(
+          `
+            UPDATE meeting_attendance
+            SET
+              youth_id = ?,
+              attendee_name = ?,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+          `,
+          youthId,
+          youth.fullName,
+          existing.id
+        );
+
+        await touchMeeting(meetingId);
+      }
+
+      return "already-present";
+    }
+
+    await db.runAsync(
+      `
+        UPDATE meeting_attendance
+        SET
+          youth_id = ?,
+          attendee_name = ?,
+          attendance_status = 'Present',
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `,
+      youthId,
+      youth.fullName,
+      existing.id
+    );
+
+    await touchMeeting(meetingId);
+
+    await recordAppActivity({
+      actionType:
+        "meeting_attendance_updated",
+      entityType:
+        "meeting_attendance",
+      entityId: existing.id,
+      subject: youth.fullName,
+      detail:
+        "Attendance marked Present by Profile QR",
+      userId:
+        createdBy?.trim() || null,
+    });
+
+    return "updated";
+  }
+
+  await addMeetingAttendance({
+    meetingId,
+    youthId,
+    attendeeName: youth.fullName,
+    attendanceStatus: "Present",
+    createdBy,
+  });
+
+  return "created";
 }
 
 export async function updateMeetingAttendanceStatus(

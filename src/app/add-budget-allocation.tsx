@@ -750,7 +750,7 @@ const styles = StyleSheet.create({
 
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
 
   header: {
@@ -783,6 +783,7 @@ const styles = StyleSheet.create({
   },
 
   scrollView: {
+    backgroundColor: "#E3F2FD",
     flex: 1,
   },
 
@@ -813,6 +814,15 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     borderRadius: 16,
     backgroundColor: "rgba(217,119,6,0.08)",
+
+    elevation: 1,
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
   },
 
   warningText: {
@@ -891,6 +901,15 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.md,
     color: colors.text,
     backgroundColor: colors.white,
+
+    elevation: 3,
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
 
   amountContainer: {
@@ -902,6 +921,15 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: spacing.lg,
     backgroundColor: colors.white,
+
+    elevation: 3,
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
 
   peso: {
@@ -929,6 +957,15 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 14,
     backgroundColor: colors.white,
+
+    elevation: 3,
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
 
   dropdownText: {
@@ -949,6 +986,15 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: colors.white,
     overflow: "hidden",
+
+    elevation: 4,
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.12,
+    shadowRadius: 5,
   },
 
   dropdownOption: {

@@ -719,6 +719,7 @@ const styles = StyleSheet.create({
   },
 
   input: {
+    elevation: 2,
     minHeight: 54,
     borderWidth: 1,
     borderColor: colors.border,
@@ -732,6 +733,7 @@ const styles = StyleSheet.create({
   },
 
   passwordContainer: {
+    elevation: 2,
     height: 54,
     flexDirection: "row",
     alignItems: "center",
@@ -770,6 +772,7 @@ const styles = StyleSheet.create({
   },
 
   questionSelector: {
+    elevation: 2,
     minHeight: 54,
     flexDirection: "row",
     alignItems: "center",
@@ -795,6 +798,8 @@ const styles = StyleSheet.create({
   },
 
   questionList: {
+
+    elevation: 2,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 14,
@@ -837,6 +842,7 @@ const styles = StyleSheet.create({
   },
 
   formErrorBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginBottom: spacing.lg,

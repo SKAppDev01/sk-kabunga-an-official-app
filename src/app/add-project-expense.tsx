@@ -1,3 +1,6 @@
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import {
   router,
@@ -54,6 +57,43 @@ function isValidDateText(value: string) {
   );
 }
 
+function parseExpenseDate(value: string) {
+  if (!isValidDateText(value)) {
+    return null;
+  }
+
+  const [year, month, day] =
+    value.split("-").map(Number);
+
+  return new Date(year, month - 1, day);
+}
+
+function toIsoDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(
+    date.getMonth() + 1
+  ).padStart(2, "0");
+  const day = String(
+    date.getDate()
+  ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function formatExpenseDate(value: string) {
+  const date = parseExpenseDate(value);
+
+  if (!date) {
+    return "Select date";
+  }
+
+  return date.toLocaleDateString("en-PH", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 export default function AddProjectExpenseScreen() {
   const params =
     useLocalSearchParams<{
@@ -72,6 +112,10 @@ export default function AddProjectExpenseScreen() {
     useState("");
   const [expenseDate, setExpenseDate] =
     useState("");
+  const [
+    showExpenseDatePicker,
+    setShowExpenseDatePicker,
+  ] = useState(false);
   const [notes, setNotes] =
     useState("");
   const [isSaving, setIsSaving] =
@@ -87,6 +131,27 @@ export default function AddProjectExpenseScreen() {
       [field]: undefined,
       form: undefined,
     }));
+  }
+
+  function openExpenseDatePicker() {
+    setShowExpenseDatePicker(true);
+  }
+
+  function handleExpenseDateChange(
+    event: DateTimePickerEvent,
+    selectedDate?: Date
+  ) {
+    setShowExpenseDatePicker(false);
+
+    if (
+      event.type === "dismissed" ||
+      !selectedDate
+    ) {
+      return;
+    }
+
+    setExpenseDate(toIsoDate(selectedDate));
+    clearError("expenseDate");
   }
 
   async function handleSave() {
@@ -302,12 +367,14 @@ export default function AddProjectExpenseScreen() {
               Expense Date
             </Text>
 
-            <View
+            <Pressable
               style={[
                 styles.dateContainer,
                 errors.expenseDate &&
                   styles.inputError,
               ]}
+              onPress={openExpenseDatePicker}
+              disabled={isSaving}
             >
               <Ionicons
                 name="calendar-outline"
@@ -315,27 +382,23 @@ export default function AddProjectExpenseScreen() {
                 color={colors.textMuted}
               />
 
-              <TextInput
-                style={styles.dateInput}
-                value={expenseDate}
-                onChangeText={(text) => {
-                  setExpenseDate(text);
+              <Text
+                style={[
+                  styles.dateInput,
+                  !expenseDate &&
+                    styles.datePlaceholder,
+                ]}
+                numberOfLines={1}
+              >
+                {formatExpenseDate(expenseDate)}
+              </Text>
 
-                  if (errors.expenseDate) {
-                    clearError(
-                      "expenseDate"
-                    );
-                  }
-                }}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={
-                  colors.textMuted
-                }
-                keyboardType="numbers-and-punctuation"
-                maxLength={10}
-                editable={!isSaving}
+              <Ionicons
+                name="chevron-down-outline"
+                size={18}
+                color={colors.textSecondary}
               />
-            </View>
+            </Pressable>
 
             {errors.expenseDate && (
               <Text style={styles.errorText}>
@@ -401,6 +464,18 @@ export default function AddProjectExpenseScreen() {
             </Text>
           </Pressable>
         </ScrollView>
+
+        {showExpenseDatePicker && (
+          <DateTimePicker
+            value={
+              parseExpenseDate(expenseDate) ??
+              new Date()
+            }
+            mode="date"
+            display="default"
+            onChange={handleExpenseDateChange}
+          />
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -413,7 +488,7 @@ const styles = StyleSheet.create({
 
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
 
   header: {
@@ -446,6 +521,7 @@ const styles = StyleSheet.create({
   },
 
   scrollView: {
+    backgroundColor: "#E3F2FD",
     flex: 1,
   },
 
@@ -482,6 +558,7 @@ const styles = StyleSheet.create({
   },
 
   input: {
+    elevation: 2,
     minHeight: 54,
     borderWidth: 1,
     borderColor: colors.border,
@@ -499,6 +576,7 @@ const styles = StyleSheet.create({
   },
 
   amountContainer: {
+    elevation: 2,
     height: 54,
     flexDirection: "row",
     alignItems: "center",
@@ -525,6 +603,7 @@ const styles = StyleSheet.create({
   },
 
   dateContainer: {
+    elevation: 2,
     height: 54,
     flexDirection: "row",
     alignItems: "center",
@@ -537,10 +616,15 @@ const styles = StyleSheet.create({
 
   dateInput: {
     flex: 1,
-    height: "100%",
+    minWidth: 0,
     marginLeft: spacing.sm,
+    marginRight: spacing.sm,
     fontSize: typography.fontSize.md,
     color: colors.text,
+  },
+
+  datePlaceholder: {
+    color: colors.textMuted,
   },
 
   inputError: {

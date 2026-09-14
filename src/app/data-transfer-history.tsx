@@ -533,8 +533,7 @@ export default function DataTransferHistoryScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor:
-      colors.background,
+    backgroundColor: "#E3F2FD",
   },
   header: {
     height: 60,
@@ -594,6 +593,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   summary: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "center",
     marginTop: spacing.xl,
@@ -758,6 +758,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   errorBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.xl,
@@ -775,6 +776,7 @@ const styles = StyleSheet.create({
     color: colors.danger,
   },
   infoBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.xl,

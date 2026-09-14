@@ -8,7 +8,6 @@ import {
   useState,
 } from "react";
 import {
-  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,13 +16,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { CivicBackground } from "../../components/CivicBackground";
+
 import {
-  deleteLocalAccount,
-  getAllLocalAccounts,
-  LocalAccount,
-} from "../../services/auth";
-import {
-  clearSession,
   getCurrentSessionUser,
   SessionUser,
 } from "../../services/session";
@@ -36,53 +31,18 @@ import {
 export default function MoreScreen() {
   const [user, setUser] =
     useState<SessionUser | null>(null);
-  const [accounts, setAccounts] =
-    useState<LocalAccount[]>([]);
-  const [isDeleting, setIsDeleting] =
-    useState<string | null>(null);
-
-  const loadData = useCallback(
-    async () => {
-      try {
-        const [
-          currentUser,
-          registeredAccounts,
-        ] = await Promise.all([
-          getCurrentSessionUser(),
-          getAllLocalAccounts(),
-        ]);
-
-        setUser(currentUser);
-        setAccounts(registeredAccounts);
-      } catch (error) {
-        console.error(
-          "More screen loading error:",
-          error
-        );
-      }
-    },
-    []
-  );
 
   useFocusEffect(
     useCallback(() => {
       let active = true;
 
-      async function run() {
+      async function load() {
         try {
-          const [
-            currentUser,
-            registeredAccounts,
-          ] = await Promise.all([
-            getCurrentSessionUser(),
-            getAllLocalAccounts(),
-          ]);
+          const currentUser =
+            await getCurrentSessionUser();
 
           if (active) {
             setUser(currentUser);
-            setAccounts(
-              registeredAccounts
-            );
           }
         } catch (error) {
           console.error(
@@ -92,7 +52,7 @@ export default function MoreScreen() {
         }
       }
 
-      run();
+      load();
 
       return () => {
         active = false;
@@ -100,75 +60,14 @@ export default function MoreScreen() {
     }, [])
   );
 
-  async function handleSignOut() {
-    try {
-      await clearSession();
-      router.replace("/login");
-    } catch (error) {
-      console.error(
-        "Sign out error:",
-        error
-      );
-    }
-  }
-
-  function handleDeleteAccount(
-    account: LocalAccount
-  ) {
-    if (account.id === user?.id) {
-      Alert.alert(
-        "Current Account",
-        "You cannot delete the account that is currently signed in."
-      );
-      return;
-    }
-
-    Alert.alert(
-      "Delete Registered User?",
-      `Delete @${account.username} from this device? This action cannot be undone.`,
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setIsDeleting(
-                account.id
-              );
-
-              await deleteLocalAccount(
-                account.id
-              );
-
-              await loadData();
-            } catch (error) {
-              console.error(
-                "Delete local account error:",
-                error
-              );
-
-              Alert.alert(
-                "Delete Failed",
-                "Unable to delete this registered user."
-              );
-            } finally {
-              setIsDeleting(null);
-            }
-          },
-        },
-      ]
-    );
-  }
-
   return (
-    <SafeAreaView
-      style={styles.safeArea}
-      edges={["top"]}
-    >
+    <View style={styles.background}>
+      <CivicBackground />
+
+      <SafeAreaView
+        style={styles.safeArea}
+        edges={["top"]}
+      >
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={
@@ -181,6 +80,29 @@ export default function MoreScreen() {
         <Text style={styles.title}>
           More
         </Text>
+
+        <View style={styles.flagAccent}>
+          <View
+            style={[
+              styles.flagAccentSection,
+              styles.flagAccentBlue,
+            ]}
+          />
+
+          <View
+            style={[
+              styles.flagAccentSection,
+              styles.flagAccentGold,
+            ]}
+          />
+
+          <View
+            style={[
+              styles.flagAccentSection,
+              styles.flagAccentRed,
+            ]}
+          />
+        </View>
 
         <Text style={styles.subtitle}>
           Account and application settings
@@ -196,328 +118,223 @@ export default function MoreScreen() {
           </View>
 
           <View style={styles.profileInfo}>
-            <Text style={styles.fullName}>
+            <Text
+              style={styles.fullName}
+              numberOfLines={2}
+            >
               {user?.fullName ||
                 user?.username ||
                 "SK User"}
             </Text>
 
-            <Text style={styles.username}>
+            <Text
+              style={styles.username}
+              numberOfLines={1}
+            >
               @{user?.username || ""}
             </Text>
 
-            <Text style={styles.role}>
+            <Text
+              style={styles.role}
+              numberOfLines={2}
+            >
               {user?.role ||
                 "Role not assigned"}
             </Text>
           </View>
         </View>
 
-        <View style={styles.settingsSection}>
-          <Text style={styles.settingsSectionTitle}>
-            Data & Sharing
-          </Text>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.settingsRow,
-              pressed &&
-                styles.pressed,
-            ]}
-            onPress={() =>
-              router.push(
-                "/data-management"
-              )
-            }
-          >
-            <View style={styles.settingsIcon}>
-              <Ionicons
-                name="swap-horizontal-outline"
-                size={23}
-                color={colors.primary}
-              />
-            </View>
-
-            <View style={styles.settingsText}>
-              <Text
-                style={styles.settingsTitle}
-              >
-                Data Management
-              </Text>
-
-              <Text
-                style={styles.settingsDescription}
-              >
-                Export, import, backup and restore offline data
-              </Text>
-            </View>
-
-            <Ionicons
-              name="chevron-forward-outline"
-              size={20}
-              color={colors.textMuted}
-            />
-          </Pressable>
-        </View>
-
-        <View style={styles.settingsSection}>
-          <Text style={styles.settingsSectionTitle}>
-            Security & Audit
-          </Text>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.settingsRow,
-              pressed &&
-                styles.pressed,
-            ]}
-            onPress={() =>
-              router.push(
-                "/security-audit"
-              )
-            }
-          >
-            <View style={styles.settingsIcon}>
-              <Ionicons
-                name="shield-checkmark-outline"
-                size={23}
-                color={colors.primary}
-              />
-            </View>
-
-            <View style={styles.settingsText}>
-              <Text
-                style={styles.settingsTitle}
-              >
-                Security & Audit
-              </Text>
-
-              <Text
-                style={styles.settingsDescription}
-              >
-                Account protection, access level and record traceability
-              </Text>
-            </View>
-
-            <Ionicons
-              name="chevron-forward-outline"
-              size={20}
-              color={colors.textMuted}
-            />
-          </Pressable>
-        </View>
-
-        <View style={styles.sectionHeader}>
-          <View>
-            <Text style={styles.sectionTitle}>
-              Registered Users
-            </Text>
-
-            <Text
-              style={
-                styles.temporaryText
-              }
-            >
-              Temporary device account viewer
-            </Text>
-          </View>
-
-          <Text style={styles.accountCount}>
-            {accounts.length}
-          </Text>
-        </View>
-
-        <View style={styles.usersList}>
-          {accounts.length === 0 ? (
-            <Text style={styles.emptyText}>
-              No registered users found.
-            </Text>
-          ) : (
-            accounts.map(
-              (account, index) => {
-                const isCurrent =
-                  account.id === user?.id;
-                const deleting =
-                  isDeleting === account.id;
-
-                return (
-                  <View
-                    key={account.id}
-                    style={[
-                      styles.userRow,
-                      index <
-                        accounts.length - 1 &&
-                        styles.userRowBorder,
-                    ]}
-                  >
-                    <View
-                      style={
-                        styles.userIcon
-                      }
-                    >
-                      <Ionicons
-                        name={
-                          isCurrent
-                            ? "person-circle-outline"
-                            : "person-outline"
-                        }
-                        size={23}
-                        color={
-                          isCurrent
-                            ? colors.primary
-                            : colors.textSecondary
-                        }
-                      />
-                    </View>
-
-                    <View
-                      style={
-                        styles.userInfo
-                      }
-                    >
-                      <View
-                        style={
-                          styles.userNameRow
-                        }
-                      >
-                        <Text
-                          style={
-                            styles.userName
-                          }
-                          numberOfLines={1}
-                        >
-                          {account.fullName ||
-                            account.username}
-                        </Text>
-
-                        {isCurrent && (
-                          <Text
-                            style={
-                              styles.currentBadge
-                            }
-                          >
-                            Current
-                          </Text>
-                        )}
-                      </View>
-
-                      <Text
-                        style={
-                          styles.userUsername
-                        }
-                        numberOfLines={1}
-                      >
-                        @{account.username}
-                      </Text>
-
-                      <Text
-                        style={
-                          styles.userRole
-                        }
-                        numberOfLines={1}
-                      >
-                        {account.role ||
-                          "Role not assigned"}
-                      </Text>
-                    </View>
-
-                    {!isCurrent && (
-                      <Pressable
-                        style={({
-                          pressed,
-                        }) => [
-                          styles.deleteButton,
-                          pressed &&
-                            styles.pressed,
-                          deleting &&
-                            styles.disabledButton,
-                        ]}
-                        onPress={() =>
-                          handleDeleteAccount(
-                            account
-                          )
-                        }
-                        disabled={deleting}
-                        hitSlop={8}
-                      >
-                        <Ionicons
-                          name="trash-outline"
-                          size={21}
-                          color={
-                            colors.danger
-                          }
-                        />
-
-                        <Text
-                          style={
-                            styles.deleteText
-                          }
-                        >
-                          {deleting
-                            ? "Deleting..."
-                            : "Delete"}
-                        </Text>
-                      </Pressable>
-                    )}
-                  </View>
-                );
-              }
+        <SettingsSection
+          title="Data & Sharing"
+          icon="swap-horizontal-outline"
+          rowTitle="Data Management"
+          description="Export, import, backup and restore offline data"
+          onPress={() =>
+            router.push(
+              "/data-management"
             )
-          )}
-        </View>
+          }
+        />
 
-        <Pressable
-          style={({ pressed }) => [
-            styles.signOutButton,
-            pressed &&
-              styles.pressed,
-          ]}
-          onPress={handleSignOut}
+        <SettingsSection
+          title="Security & Audit"
+          icon="shield-checkmark-outline"
+          rowTitle="Security & Audit"
+          description="Account protection, access level and record traceability"
+          onPress={() =>
+            router.push(
+              "/security-audit"
+            )
+          }
+        />
+
+        <SettingsSection
+          title="App Settings"
+          icon="settings-outline"
+          rowTitle="Application Settings"
+          description="App preferences, storage shortcuts and information"
+          onPress={() =>
+            router.push(
+              "/app-settings"
+            )
+          }
+        />
+
+
+      </ScrollView>
+      </SafeAreaView>
+    </View>
+  );
+}
+
+function SettingsSection({
+  title,
+  icon,
+  rowTitle,
+  description,
+  onPress,
+}: {
+  title: string;
+  icon:
+    | "swap-horizontal-outline"
+    | "shield-checkmark-outline"
+    | "settings-outline";
+  rowTitle: string;
+  description: string;
+  onPress: () => void;
+}) {
+  return (
+    <View style={styles.settingsSection}>
+      <Text
+        style={
+          styles.settingsSectionTitle
+        }
+      >
+        {title}
+      </Text>
+
+      <Pressable
+        style={({ pressed }) => [
+          styles.settingsRow,
+          pressed &&
+            styles.pressed,
+        ]}
+        onPress={onPress}
+      >
+        <View
+          style={styles.settingsIcon}
         >
           <Ionicons
-            name="log-out-outline"
-            size={21}
-            color={colors.danger}
+            name={icon}
+            size={23}
+            color={colors.primary}
           />
+        </View>
+
+        <View
+          style={styles.settingsText}
+        >
+          <Text
+            style={styles.settingsTitle}
+          >
+            {rowTitle}
+          </Text>
 
           <Text
-            style={styles.signOutText}
+            style={
+              styles.settingsDescription
+            }
           >
-            Sign Out
+            {description}
           </Text>
-        </Pressable>
-      </ScrollView>
-    </SafeAreaView>
+        </View>
+
+        <Ionicons
+          name="chevron-forward-outline"
+          size={20}
+          color={colors.textMuted}
+        />
+      </Pressable>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    backgroundColor: "#E3F2FD",
+  },
+
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "transparent",
   },
 
   scrollView: {
     flex: 1,
+    backgroundColor: "transparent",
   },
 
   container: {
-    paddingHorizontal: spacing.xl,
+    flexGrow: 1,
+    paddingHorizontal:
+      spacing.xl,
     paddingTop: spacing.lg,
-    paddingBottom: spacing.xxxl,
+    paddingBottom: spacing.md,
   },
 
   title: {
-    fontSize: typography.fontSize.xxl,
+    width: "100%",
+    minWidth: 0,
+    fontSize:
+      typography.fontSize.xxl,
+    lineHeight: 36,
     fontWeight:
       typography.fontWeight.bold,
-    color: colors.text,
+    color: "#0038A8",
+    flexShrink: 1,
+  },
+
+  flagAccent: {
+    width: 104,
+    height: 4,
+    flexDirection: "row",
+    overflow: "hidden",
+    marginTop: 5,
+    borderRadius: 999,
+    backgroundColor:
+      colors.border,
+  },
+
+  flagAccentSection: {
+    height: "100%",
+  },
+
+  flagAccentBlue: {
+    flex: 5,
+    backgroundColor: "#0038A8",
+  },
+
+  flagAccentGold: {
+    flex: 1,
+    backgroundColor: "#FCD116",
+  },
+
+  flagAccentRed: {
+    flex: 5,
+    backgroundColor: "#CE1126",
   },
 
   subtitle: {
-    marginTop: spacing.xs,
-    fontSize: typography.fontSize.sm,
-    color: colors.textSecondary,
+    width: "100%",
+    minWidth: 0,
+    marginTop: spacing.sm,
+    fontSize:
+      typography.fontSize.sm,
+    lineHeight: 20,
+    color:
+      colors.textSecondary,
+    flexShrink: 1,
   },
 
   profileCard: {
@@ -528,7 +345,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 18,
-    backgroundColor: colors.white,
+    backgroundColor:
+      colors.white,
+  
+    elevation: 4,
+    shadowColor: "#0F172A",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.10,
+    shadowRadius: 5,
   },
 
   avatar: {
@@ -537,34 +364,51 @@ const styles = StyleSheet.create({
     borderRadius: 27,
     alignItems: "center",
     justifyContent: "center",
+    flexShrink: 0,
     backgroundColor:
       "rgba(37,99,235,0.08)",
   },
 
   profileInfo: {
     flex: 1,
+    minWidth: 0,
     marginLeft: spacing.md,
   },
 
   fullName: {
-    fontSize: typography.fontSize.md,
+    width: "100%",
+    minWidth: 0,
+    fontSize:
+      typography.fontSize.md,
+    lineHeight: 22,
     fontWeight:
       typography.fontWeight.bold,
     color: colors.text,
+    flexShrink: 1,
   },
 
   username: {
+    width: "100%",
+    minWidth: 0,
     marginTop: 2,
-    fontSize: typography.fontSize.sm,
-    color: colors.textSecondary,
+    fontSize:
+      typography.fontSize.sm,
+    lineHeight: 20,
+    color:
+      colors.textSecondary,
   },
 
   role: {
+    width: "100%",
+    minWidth: 0,
     marginTop: spacing.xs,
-    fontSize: typography.fontSize.sm,
+    fontSize:
+      typography.fontSize.sm,
+    lineHeight: 20,
     fontWeight:
       typography.fontWeight.medium,
     color: colors.primary,
+    flexShrink: 1,
   },
 
   settingsSection: {
@@ -573,7 +417,9 @@ const styles = StyleSheet.create({
 
   settingsSectionTitle: {
     marginBottom: spacing.sm,
-    fontSize: typography.fontSize.lg,
+    fontSize:
+      typography.fontSize.lg,
+    lineHeight: 26,
     fontWeight:
       typography.fontWeight.bold,
     color: colors.text,
@@ -591,6 +437,7 @@ const styles = StyleSheet.create({
   settingsIcon: {
     width: 42,
     height: 42,
+    flexShrink: 0,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -603,159 +450,30 @@ const styles = StyleSheet.create({
   },
 
   settingsTitle: {
-    fontSize: typography.fontSize.sm,
+    width: "100%",
+    minWidth: 0,
+    fontSize:
+      typography.fontSize.sm,
+    lineHeight: 20,
     fontWeight:
       typography.fontWeight.semibold,
     color: colors.text,
+    flexShrink: 1,
   },
 
   settingsDescription: {
+    width: "100%",
+    minWidth: 0,
     marginTop: 3,
-    fontSize: typography.fontSize.xs,
+    fontSize:
+      typography.fontSize.xs,
     lineHeight: 17,
     color: colors.textMuted,
-  },
-
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: spacing.xxxl,
-    marginBottom: spacing.sm,
-  },
-
-  sectionTitle: {
-    fontSize: typography.fontSize.lg,
-    fontWeight:
-      typography.fontWeight.bold,
-    color: colors.text,
-  },
-
-  temporaryText: {
-    marginTop: 2,
-    fontSize: typography.fontSize.xs,
-    color: colors.textMuted,
-  },
-
-  accountCount: {
-    fontSize: typography.fontSize.sm,
-    color: colors.textMuted,
-  },
-
-  usersList: {
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-
-  userRow: {
-    minHeight: 86,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: spacing.md,
-  },
-
-  userRowBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-
-  userIcon: {
-    width: 38,
-    height: 38,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  userInfo: {
-    flex: 1,
-    marginLeft: spacing.sm,
-    marginRight: spacing.sm,
-  },
-
-  userNameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  userName: {
     flexShrink: 1,
-    fontSize: typography.fontSize.sm,
-    fontWeight:
-      typography.fontWeight.semibold,
-    color: colors.text,
   },
 
-  currentBadge: {
-    marginLeft: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    borderRadius: 8,
-    fontSize: 10,
-    fontWeight:
-      typography.fontWeight.semibold,
-    color: colors.primary,
-    backgroundColor:
-      "rgba(37,99,235,0.08)",
-  },
-
-  userUsername: {
-    marginTop: 2,
-    fontSize: typography.fontSize.xs,
-    color: colors.textSecondary,
-  },
-
-  userRole: {
-    marginTop: 2,
-    fontSize: typography.fontSize.xs,
-    color: colors.textMuted,
-  },
-
-  deleteButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    minHeight: 40,
-    paddingHorizontal: spacing.sm,
-  },
-
-  deleteText: {
-    marginLeft: 4,
-    fontSize: typography.fontSize.xs,
-    fontWeight:
-      typography.fontWeight.semibold,
-    color: colors.danger,
-  },
-
-  emptyText: {
-    paddingVertical: spacing.xl,
-    fontSize: typography.fontSize.sm,
-    color: colors.textSecondary,
-    textAlign: "center",
-  },
-
-  signOutButton: {
-    height: 54,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginTop: spacing.xxxl,
-    borderWidth: 1,
-    borderColor: colors.danger,
-    borderRadius: 14,
-  },
-
-  signOutText: {
-    marginLeft: spacing.sm,
-    fontSize: typography.fontSize.md,
-    fontWeight:
-      typography.fontWeight.semibold,
-    color: colors.danger,
-  },
 
   pressed: {
     opacity: 0.65,
-  },
-
-  disabledButton: {
-    opacity: 0.45,
   },
 });

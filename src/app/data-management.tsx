@@ -328,8 +328,7 @@ export default function DataManagementScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor:
-      colors.background,
+    backgroundColor: "#E3F2FD",
   },
 
   header: {
@@ -465,6 +464,7 @@ const styles = StyleSheet.create({
   },
 
   infoBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.lg,
@@ -475,6 +475,7 @@ const styles = StyleSheet.create({
   },
 
   masterBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.lg,

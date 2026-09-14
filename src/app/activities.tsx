@@ -371,8 +371,7 @@ export default function ActivitiesScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor:
-      colors.background,
+    backgroundColor: "#E3F2FD",
   },
 
   header: {
@@ -429,6 +428,7 @@ const styles = StyleSheet.create({
   },
 
   screen: {
+    backgroundColor: "#E3F2FD",
     flex: 1,
     paddingHorizontal:
       spacing.xl,

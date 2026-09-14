@@ -612,8 +612,7 @@ export default function ImportDataScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor:
-      colors.background,
+    backgroundColor: "#E3F2FD",
   },
   header: {
     height: 60,
@@ -689,6 +688,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   errorBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.md,
@@ -707,6 +707,7 @@ const styles = StyleSheet.create({
     color: colors.danger,
   },
   fileBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "center",
     marginTop: spacing.xl,
@@ -736,6 +737,7 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   noticeBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.md,
@@ -848,6 +850,7 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   conflictBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.lg,
@@ -866,6 +869,7 @@ const styles = StyleSheet.create({
     color: "#92400E",
   },
   infoBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.md,

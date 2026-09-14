@@ -853,8 +853,7 @@ export default function ReceiveDataQrScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor:
-      colors.background,
+    backgroundColor: "#E3F2FD",
   },
   header: {
     height: 60,
@@ -958,6 +957,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   errorBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.md,
@@ -975,6 +975,7 @@ const styles = StyleSheet.create({
     color: colors.danger,
   },
   infoBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.xl,
@@ -1017,6 +1018,7 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   publicNotice: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.lg,
@@ -1119,6 +1121,7 @@ const styles = StyleSheet.create({
     color: "#B45309",
   },
   warningBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.lg,

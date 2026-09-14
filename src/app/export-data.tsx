@@ -381,8 +381,7 @@ export default function ExportDataScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor:
-      colors.background,
+    backgroundColor: "#E3F2FD",
   },
   header: {
     height: 60,
@@ -458,6 +457,7 @@ const styles = StyleSheet.create({
       colors.textSecondary,
   },
   totalBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "center",
     justifyContent:
@@ -528,6 +528,7 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   warningBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.xl,
@@ -547,6 +548,7 @@ const styles = StyleSheet.create({
       colors.textSecondary,
   },
   infoBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.md,

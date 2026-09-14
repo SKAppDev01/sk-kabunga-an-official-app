@@ -1,5 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router, useFocusEffect } from "expo-router";
+import {
+  router,
+  useFocusEffect,
+} from "expo-router";
 import {
   useCallback,
   useState,
@@ -13,6 +16,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { CivicBackground } from "../../components/CivicBackground";
+
 import {
   FinanceSummary,
   getFinanceSummary,
@@ -21,7 +26,9 @@ import {
   getCurrentSessionUser,
   SessionUser,
 } from "../../services/session";
-import { isYouthMemberRole } from "../../services/access";
+import {
+  isYouthMemberRole,
+} from "../../services/access";
 import {
   colors,
   spacing,
@@ -37,13 +44,36 @@ const EMPTY_SUMMARY: FinanceSummary = {
   expenseCount: 0,
 };
 
+function formatCurrency(
+  value: number
+) {
+  return `₱${value.toLocaleString(
+    "en-PH",
+    {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }
+  )}`;
+}
+
 export default function FinanceScreen() {
-  const [currentUser, setCurrentUser] =
-    useState<SessionUser | null>(null);
+  const [
+    currentUser,
+    setCurrentUser,
+  ] =
+    useState<SessionUser | null>(
+      null
+    );
+
   const [summary, setSummary] =
-    useState<FinanceSummary>(EMPTY_SUMMARY);
-  const [isLoading, setIsLoading] =
-    useState(true);
+    useState<FinanceSummary>(
+      EMPTY_SUMMARY
+    );
+
+  const [
+    isLoading,
+    setIsLoading,
+  ] = useState(true);
 
   useFocusEffect(
     useCallback(() => {
@@ -52,11 +82,14 @@ export default function FinanceScreen() {
       async function loadFinance() {
         try {
           setIsLoading(true);
+
           const user =
             await getCurrentSessionUser();
 
           if (!user) {
-            router.replace("/login");
+            router.replace(
+              "/login"
+            );
             return;
           }
 
@@ -87,203 +120,412 @@ export default function FinanceScreen() {
     }, [])
   );
 
-  function formatCurrency(value: number) {
-    return `₱${value.toLocaleString("en-PH", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
-  }
-
   const youthMember =
-    isYouthMemberRole(currentUser?.role);
+    isYouthMemberRole(
+      currentUser?.role
+    );
+
   const canManage =
-    Boolean(currentUser) && !youthMember;
+    Boolean(currentUser) &&
+    !youthMember;
+
+  const utilizationPercent =
+    summary.totalAllocated > 0
+      ? Math.min(
+          100,
+          Math.max(
+            0,
+            (summary.totalExpenses /
+              summary.totalAllocated) *
+              100
+          )
+        )
+      : 0;
 
   return (
-    <SafeAreaView
-      style={styles.safeArea}
-      edges={["top"]}
-    >
+    <View style={styles.background}>
+      <CivicBackground />
+
+      <SafeAreaView
+        style={styles.safeArea}
+        edges={["top"]}
+      >
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={
+          styles.content
+        }
+        showsVerticalScrollIndicator={
+          false
+        }
       >
         <Text style={styles.title}>
           Finance
         </Text>
+
+        <View style={styles.flagAccent}>
+          <View
+            style={[
+              styles.flagAccentSection,
+              styles.flagAccentBlue,
+            ]}
+          />
+
+          <View
+            style={[
+              styles.flagAccentSection,
+              styles.flagAccentGold,
+            ]}
+          />
+
+          <View
+            style={[
+              styles.flagAccentSection,
+              styles.flagAccentRed,
+            ]}
+          />
+        </View>
+
         <Text style={styles.subtitle}>
           {youthMember
-            ? "Financial information available to youth members"
-            : "Budget and financial overview"}
+            ? "Public budget and expense information"
+            : "Manage SK budget and expenses"}
         </Text>
 
-        <Text style={styles.sectionTitle}>
-          Financial Summary
-        </Text>
+        <View
+          style={styles.overviewCard}
+        >
+          <View
+            style={
+              styles.overviewHeader
+            }
+          >
+            <Text
+              style={
+                styles.overviewTitle
+              }
+            >
+              Budget Overview
+            </Text>
 
-        <View style={styles.primaryCard}>
-          <View style={styles.cardIcon}>
-            <Ionicons
-              name="wallet-outline"
-              size={24}
-              color={colors.primary}
-            />
-          </View>
+            <Pressable
+              style={({ pressed }) => [
+                styles.detailsLink,
+                pressed &&
+                  styles.pressed,
+              ]}
+              onPress={() =>
+                router.push(
+                  "/budget-balance"
+                )
+              }
+            >
+              <Text
+                style={
+                  styles.detailsLinkText
+                }
+              >
+                Details
+              </Text>
 
-          <Text style={styles.primaryLabel}>
-            Total Budget Allocated
-          </Text>
-          <Text style={styles.primaryValue}>
-            {isLoading
-              ? "—"
-              : formatCurrency(
-                  summary.totalAllocated
-                )}
-          </Text>
-        </View>
-
-        <View style={styles.summaryRow}>
-          <View style={styles.smallCard}>
-            <View style={styles.smallCardHeader}>
               <Ionicons
-                name="receipt-outline"
-                size={20}
+                name="chevron-forward"
+                size={16}
                 color={colors.primary}
               />
-              <Text style={styles.smallLabel}>
-                Expenses
-              </Text>
-            </View>
-            <Text style={styles.smallValue}>
-              {isLoading
-                ? "—"
-                : formatCurrency(
-                    summary.totalExpenses
-                  )}
-            </Text>
+            </Pressable>
           </View>
 
-          <View style={styles.rowSpacer} />
+          <View
+            style={
+              styles.overviewMetrics
+            }
+          >
+            <Metric
+              label="Allocated"
+              value={
+                isLoading
+                  ? "—"
+                  : formatCurrency(
+                      summary.totalAllocated
+                    )
+              }
+            />
 
-          <View style={styles.smallCard}>
-            <View style={styles.smallCardHeader}>
-              <Ionicons
-                name="cash-outline"
-                size={20}
-                color={
-                  summary.remainingBalance < 0
-                    ? colors.danger
-                    : colors.success
-                }
-              />
-              <Text
-                style={styles.smallLabel}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.75}
-              >
-                Remaining Budget
-              </Text>
-            </View>
+            <View
+              style={
+                styles.metricDivider
+              }
+            />
+
+            <Metric
+              label="Expenses"
+              value={
+                isLoading
+                  ? "—"
+                  : formatCurrency(
+                      summary.totalExpenses
+                    )
+              }
+            />
+
+            <View
+              style={
+                styles.metricDivider
+              }
+            />
+
+            <Metric
+              label="Remaining"
+              value={
+                isLoading
+                  ? "—"
+                  : formatCurrency(
+                      summary.remainingBalance
+                    )
+              }
+              positive={
+                summary.remainingBalance >=
+                0
+              }
+            />
+          </View>
+
+          <View
+            style={
+              styles.utilizationHeader
+            }
+          >
             <Text
-              style={[
-                styles.smallValue,
-                summary.remainingBalance < 0 &&
-                  styles.negativeValue,
-              ]}
+              style={
+                styles.utilizationLabel
+              }
+            >
+              Budget utilization
+            </Text>
+
+            <Text
+              style={
+                styles.utilizationValue
+              }
             >
               {isLoading
                 ? "—"
-                : formatCurrency(
-                    summary.remainingBalance
-                  )}
+                : `${utilizationPercent.toFixed(
+                    1
+                  )}%`}
             </Text>
+          </View>
+
+          <View
+            style={styles.progressTrack}
+          >
+            <View
+              style={[
+                styles.progressFill,
+                {
+                  width:
+                    `${utilizationPercent}%`,
+                },
+              ]}
+            />
           </View>
         </View>
 
-        <Pressable
-          style={({ pressed }) => [
-            styles.balanceDetailsButton,
-            pressed &&
-              styles.balanceDetailsButtonPressed,
-          ]}
-          onPress={() =>
-            router.push("/budget-balance")
-          }
-        >
-          <View style={styles.balanceDetailsLeft}>
-            <Ionicons
-              name="analytics-outline"
-              size={19}
-              color={colors.primary}
-            />
-
+        {canManage ? (
+          <>
             <Text
-              style={styles.balanceDetailsText}
+              style={
+                styles.sectionTitle
+              }
             >
-              View Balance Details
+              Quick Actions
             </Text>
-          </View>
 
-          <Ionicons
-            name="chevron-forward-outline"
-            size={18}
-            color={colors.primary}
-          />
-        </Pressable>
+            <View
+              style={
+                styles.quickActions
+              }
+            >
+              <QuickAction
+                icon="add-circle-outline"
+                label="Add Expense"
+                onPress={() =>
+                  router.push(
+                    "/add-expense"
+                  )
+                }
+              />
 
-        <Text style={styles.sectionTitle}>
-          Records Overview
+              <View
+                style={
+                  styles.actionSpacer
+                }
+              />
+
+              <QuickAction
+                icon="wallet-outline"
+                label="Add Allocation"
+                onPress={() =>
+                  router.push(
+                    "/add-budget-allocation"
+                  )
+                }
+              />
+            </View>
+          </>
+        ) : null}
+
+        <Text
+          style={styles.sectionTitle}
+        >
+          Finance Records
         </Text>
 
-        <View style={styles.recordsCard}>
-          {canManage && (
+        <View style={styles.recordsList}>
+          {canManage ? (
             <>
               <RecordRow
                 icon="albums-outline"
                 label="Budget Categories"
-                value={summary.categoryCount}
+                value={
+                  summary.categoryCount
+                }
                 onPress={() =>
-                  router.push("/budget-categories")
+                  router.push(
+                    "/budget-categories"
+                  )
                 }
               />
-              <View style={styles.divider} />
+
+              <View
+                style={styles.divider}
+              />
             </>
-          )}
+          ) : null}
+
           <RecordRow
             icon="pie-chart-outline"
             label="Budget Allocations"
-            value={summary.allocationCount}
+            value={
+              summary.allocationCount
+            }
             onPress={() =>
-              router.push("/budget-allocations")
+              router.push(
+                "/budget-allocations"
+              )
             }
           />
-          <View style={styles.divider} />
+
+          <View
+            style={styles.divider}
+          />
+
           <RecordRow
             icon="receipt-outline"
             label="Expense Records"
-            value={summary.expenseCount}
+            value={
+              summary.expenseCount
+            }
             onPress={() =>
-              router.push("/expenses")
+              router.push(
+                "/expenses"
+              )
             }
           />
         </View>
 
-        <View style={styles.infoCard}>
-          <Ionicons
-            name="information-circle-outline"
-            size={22}
-            color={colors.primary}
-          />
-          <Text style={styles.infoText}>
-            {youthMember
-              ? "Only budget allocations and expenses approved for youth-member viewing are shown here. Internal notes and receipt photos remain private."
-              : "Finance is the source of truth for official budget and expense records. Project expenses linked to a project also appear in its Project Details."}
-          </Text>
-        </View>
+        {youthMember ? (
+          <View style={styles.infoRow}>
+            <Ionicons
+              name="information-circle-outline"
+              size={20}
+              color={colors.primary}
+            />
+
+            <Text
+              style={styles.infoText}
+            >
+              Only records approved for
+              youth-member viewing are
+              shown. Internal notes and
+              receipt photos remain private.
+            </Text>
+          </View>
+        ) : null}
       </ScrollView>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
+  );
+}
+
+function Metric({
+  label,
+  value,
+  positive,
+}: {
+  label: string;
+  value: string;
+  positive?: boolean;
+}) {
+  return (
+    <View style={styles.metric}>
+      <Text style={styles.metricLabel}>
+        {label}
+      </Text>
+
+      <Text
+        style={[
+          styles.metricValue,
+          positive === true &&
+            styles.positiveValue,
+          positive === false &&
+            styles.negativeValue,
+        ]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.68}
+      >
+        {value}
+      </Text>
+    </View>
+  );
+}
+
+function QuickAction({
+  icon,
+  label,
+  onPress,
+}: {
+  icon:
+    | "add-circle-outline"
+    | "wallet-outline";
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      style={({ pressed }) => [
+        styles.quickAction,
+        pressed &&
+          styles.pressed,
+      ]}
+      onPress={onPress}
+    >
+      <Ionicons
+        name={icon}
+        size={22}
+        color={colors.primary}
+      />
+
+      <Text
+        style={
+          styles.quickActionLabel
+        }
+      >
+        {label}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -299,20 +541,20 @@ function RecordRow({
     | "receipt-outline";
   label: string;
   value: number;
-  onPress?: () => void;
+  onPress: () => void;
 }) {
   return (
     <Pressable
       style={({ pressed }) => [
         styles.recordRow,
         pressed &&
-          onPress &&
-          styles.recordRowPressed,
+          styles.pressed,
       ]}
       onPress={onPress}
-      disabled={!onPress}
     >
-      <View style={styles.recordIcon}>
+      <View
+        style={styles.recordIcon}
+      >
         <Ionicons
           name={icon}
           size={20}
@@ -320,222 +562,382 @@ function RecordRow({
         />
       </View>
 
-      <Text style={styles.recordLabel}>
+      <Text
+        style={styles.recordLabel}
+      >
         {label}
       </Text>
 
-      <Text style={styles.recordValue}>
+      <Text
+        style={styles.recordValue}
+      >
         {value}
       </Text>
 
-      {onPress && (
-        <Ionicons
-          name="chevron-forward-outline"
-          size={19}
-          color={colors.textMuted}
-        />
-      )}
+      <Ionicons
+        name="chevron-forward"
+        size={19}
+        color={colors.textMuted}
+      />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    backgroundColor: "#E3F2FD",
+  },
+
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "transparent",
   },
 
   scrollView: {
     flex: 1,
+    backgroundColor: "transparent",
   },
 
   content: {
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal:
+      spacing.xl,
     paddingTop: spacing.lg,
-    paddingBottom: spacing.xxxl,
+    paddingBottom:
+      spacing.xxxl +
+      spacing.xl,
   },
 
   title: {
-    fontSize: typography.fontSize.xxl,
-    fontWeight: typography.fontWeight.bold,
-    color: colors.text,
+    width: "100%",
+    minWidth: 0,
+    fontSize:
+      typography.fontSize.xxl,
+    lineHeight: 36,
+    fontWeight:
+      typography.fontWeight.bold,
+    color: "#0038A8",
+    flexShrink: 1,
+  },
+
+  flagAccent: {
+    width: 104,
+    height: 4,
+    flexDirection: "row",
+    overflow: "hidden",
+    marginTop: 5,
+    borderRadius: 999,
+    backgroundColor: colors.border,
+  },
+
+  flagAccentSection: {
+    height: "100%",
+  },
+
+  flagAccentBlue: {
+    flex: 5,
+    backgroundColor: "#0038A8",
+  },
+
+  flagAccentGold: {
+    flex: 1,
+    backgroundColor: "#FCD116",
+  },
+
+  flagAccentRed: {
+    flex: 5,
+    backgroundColor: "#CE1126",
   },
 
   subtitle: {
-    marginTop: spacing.xs,
-    fontSize: typography.fontSize.sm,
-    color: colors.textSecondary,
+    width: "100%",
+    minWidth: 0,
+    marginTop: spacing.sm,
+    fontSize:
+      typography.fontSize.sm,
+    lineHeight: 20,
+    color:
+      colors.textSecondary,
   },
 
-  sectionTitle: {
+  overviewCard: {
     marginTop: spacing.xl,
-    marginBottom: spacing.md,
-    fontSize: typography.fontSize.lg,
-    fontWeight: typography.fontWeight.bold,
-    color: colors.text,
-  },
-
-  primaryCard: {
-    padding: spacing.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 20,
-    backgroundColor: colors.white,
-  },
-
-  cardIcon: {
-    width: 46,
-    height: 46,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(37,99,235,0.08)",
-  },
-
-  primaryLabel: {
-    marginTop: spacing.lg,
-    fontSize: typography.fontSize.sm,
-    color: colors.textSecondary,
-  },
-
-  primaryValue: {
-    marginTop: spacing.xs,
-    fontSize: typography.fontSize.xxl,
-    fontWeight: typography.fontWeight.bold,
-    color: colors.text,
-  },
-
-  summaryRow: {
-    flexDirection: "row",
-    marginTop: spacing.md,
-  },
-
-  smallCard: {
-    flex: 1,
-    minHeight: 116,
     padding: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 18,
-    backgroundColor: colors.white,
+    borderRadius: 16,
+    backgroundColor:
+      colors.white,
+  
+    elevation: 4,
+    shadowColor: "#0F172A",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.10,
+    shadowRadius: 5,
   },
 
-  rowSpacer: {
-    width: spacing.md,
-  },
-
-  smallCardHeader: {
+  overviewHeader: {
     flexDirection: "row",
     alignItems: "center",
   },
 
-  smallLabel: {
+  overviewTitle: {
     flex: 1,
-    marginLeft: spacing.sm,
-    fontSize: typography.fontSize.xs,
-    color: colors.textSecondary,
+    minWidth: 0,
+    paddingRight: spacing.sm,
+    fontSize:
+      typography.fontSize.md,
+    fontWeight:
+      typography.fontWeight.bold,
+    color: colors.text,
   },
 
-  smallValue: {
+  detailsLink: {
+    minHeight: 34,
+    flexShrink: 0,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  detailsLinkText: {
+    fontSize:
+      typography.fontSize.xs,
+    fontWeight:
+      typography.fontWeight.semibold,
+    color: colors.primary,
+  },
+
+  overviewMetrics: {
+    flexDirection: "row",
+    alignItems: "stretch",
     marginTop: spacing.lg,
-    fontSize: typography.fontSize.lg,
-    fontWeight: typography.fontWeight.bold,
+  },
+
+  metric: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: "center",
+    paddingHorizontal: 2,
+  },
+
+  metricDivider: {
+    width: 1,
+    marginHorizontal:
+      spacing.xs,
+    backgroundColor:
+      colors.border,
+  },
+
+  metricLabel: {
+    width: "100%",
+    minWidth: 0,
+    fontSize: 9,
+    lineHeight: 14,
+    color: colors.textMuted,
+    textAlign: "center",
+  },
+
+  metricValue: {
+    width: "100%",
+    minWidth: 0,
+    marginTop: 4,
+    fontSize: 14,
+    lineHeight: 20,
+    fontWeight:
+      typography.fontWeight.bold,
     color: colors.text,
+    textAlign: "center",
+  },
+
+  positiveValue: {
+    color: colors.success,
   },
 
   negativeValue: {
     color: colors.danger,
   },
 
-  balanceDetailsButton: {
-    minHeight: 48,
+  utilizationHeader: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: spacing.md,
-    paddingHorizontal: spacing.md,
-    borderRadius: 14,
-    backgroundColor:
-      "rgba(37,99,235,0.06)",
+    marginTop: spacing.lg,
   },
 
-  balanceDetailsButtonPressed: {
-    opacity: 0.7,
+  utilizationLabel: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: 10,
+    lineHeight: 16,
+    color:
+      colors.textSecondary,
   },
 
-  balanceDetailsLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-
-  balanceDetailsText: {
-    marginLeft: spacing.sm,
-    fontSize: typography.fontSize.sm,
+  utilizationValue: {
+    minWidth: 52,
+    flexShrink: 0,
+    fontSize: 10,
+    lineHeight: 16,
     fontWeight:
       typography.fontWeight.semibold,
-    color: colors.primary,
+    color:
+      colors.textSecondary,
+    textAlign: "right",
   },
 
-  recordsCard: {
-    paddingHorizontal: spacing.lg,
+  progressTrack: {
+    height: 9,
+    marginTop: spacing.xs,
+    overflow: "hidden",
+    borderRadius: 999,
+    backgroundColor:
+      colors.border,
+  },
+
+  progressFill: {
+    height: "100%",
+    borderRadius: 999,
+    backgroundColor:
+      colors.primary,
+  },
+
+  sectionTitle: {
+    marginTop: spacing.xl,
+    marginBottom: spacing.sm,
+    fontSize:
+      typography.fontSize.md,
+    fontWeight:
+      typography.fontWeight.bold,
+    color: colors.text,
+  },
+
+  quickActions: {
+    flexDirection: "row",
+  },
+
+  quickAction: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 64,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal:
+      spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 18,
-    backgroundColor: colors.white,
+    borderRadius: 14,
+    backgroundColor:
+      colors.white,
+  
+    elevation: 4,
+    shadowColor: "#0F172A",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.10,
+    shadowRadius: 5,
+  },
+
+  quickActionLabel: {
+    minWidth: 0,
+    marginLeft: spacing.sm,
+    fontSize: 11,
+    lineHeight: 17,
+    fontWeight:
+      typography.fontWeight.semibold,
+    color: colors.text,
+    textAlign: "center",
+    flexShrink: 1,
+  },
+
+  actionSpacer: {
+    width: spacing.sm,
+  },
+
+  recordsList: {
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: colors.border,
   },
 
   recordRow: {
-    minHeight: 68,
+    minHeight: 66,
     flexDirection: "row",
     alignItems: "center",
-  },
-
-  recordRowPressed: {
-    opacity: 0.72,
+    paddingVertical:
+      spacing.sm,
   },
 
   recordIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+    width: 42,
+    height: 42,
+    flexShrink: 0,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(37,99,235,0.08)",
+    borderRadius: 12,
+    backgroundColor:
+      "#EFF6FF",
   },
 
   recordLabel: {
     flex: 1,
+    minWidth: 0,
     marginLeft: spacing.md,
-    fontSize: typography.fontSize.sm,
-    color: colors.textSecondary,
+    paddingRight: spacing.sm,
+    fontSize:
+      typography.fontSize.sm,
+    lineHeight: 20,
+    fontWeight:
+      typography.fontWeight.medium,
+    color: colors.text,
   },
 
   recordValue: {
-    fontSize: typography.fontSize.md,
-    fontWeight: typography.fontWeight.bold,
+    minWidth: 32,
+    flexShrink: 0,
+    marginRight: spacing.xs,
+    fontSize:
+      typography.fontSize.sm,
+    lineHeight: 20,
+    fontWeight:
+      typography.fontWeight.bold,
     color: colors.text,
+    textAlign: "right",
   },
 
   divider: {
     height: 1,
-    marginLeft: 52,
-    backgroundColor: colors.border,
+    marginLeft: 54,
+    backgroundColor:
+      colors.border,
   },
 
-  infoCard: {
+  infoRow: {
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.xl,
-    padding: spacing.lg,
-    borderRadius: 16,
-    backgroundColor: "rgba(37,99,235,0.06)",
+    paddingTop: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor:
+      colors.border,
   },
 
   infoText: {
     flex: 1,
-    marginLeft: spacing.md,
-    fontSize: typography.fontSize.sm,
-    lineHeight: 20,
-    color: colors.textSecondary,
+    minWidth: 0,
+    marginLeft: spacing.sm,
+    fontSize:
+      typography.fontSize.xs,
+    lineHeight: 18,
+    color:
+      colors.textSecondary,
+  },
+
+  pressed: {
+    opacity: 0.68,
   },
 });

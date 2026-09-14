@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker, {
-  DateTimePickerEvent,
+  type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import {
   router,
@@ -234,20 +234,20 @@ export default function EditYouthScreen() {
   }
 
   function handleBirthdayValueChange(
-    _event: DateTimePickerEvent,
+    event: DateTimePickerEvent,
     selectedDate?: Date
   ) {
-    if (!selectedDate) {
+    setShowDatePicker(false);
+
+    if (
+      event.type === "dismissed" ||
+      !selectedDate
+    ) {
       return;
     }
 
     setBirthday(selectedDate);
     clearError("birthday");
-    setShowDatePicker(false);
-  }
-
-  function handleBirthdayDismiss() {
-    setShowDatePicker(false);
   }
 
   async function handleSave() {
@@ -563,12 +563,7 @@ export default function EditYouthScreen() {
                 mode="date"
                 display="default"
                 maximumDate={new Date()}
-                onValueChange={
-                  handleBirthdayValueChange
-                }
-                onDismiss={
-                  handleBirthdayDismiss
-                }
+                onChange={handleBirthdayValueChange}
               />
             )}
           </View>
@@ -802,7 +797,7 @@ const styles = StyleSheet.create({
 
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
 
   header: {
@@ -835,6 +830,7 @@ const styles = StyleSheet.create({
   },
 
   scrollView: {
+    backgroundColor: "#E3F2FD",
     flex: 1,
   },
 
@@ -871,6 +867,7 @@ const styles = StyleSheet.create({
   },
 
   input: {
+    elevation: 2,
     minHeight: 54,
     borderWidth: 1,
     borderColor: colors.border,
@@ -882,6 +879,7 @@ const styles = StyleSheet.create({
   },
 
   selector: {
+    elevation: 2,
     minHeight: 54,
     flexDirection: "row",
     alignItems: "center",
@@ -912,6 +910,7 @@ const styles = StyleSheet.create({
   },
 
   dropdownMenu: {
+    elevation: 2,
     marginTop: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,

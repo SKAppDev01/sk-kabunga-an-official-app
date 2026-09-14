@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import {
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -17,12 +18,23 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import QRScanner from "../components/QRScanner";
+import {
+  parseProfileQrPayload,
+} from "../services/profile-qr-data";
 import {
   ActivityAttendanceStatus,
   ActivityParticipantRecord,
   getActivityParticipants,
+  markYouthPresentAtActivity,
   updateActivityAttendanceStatus,
 } from "../services/activities";
+import {
+  getCurrentSessionUser,
+} from "../services/session";
+import {
+  resolveYouthFromProfileQr,
+} from "../services/youth";
 import {
   colors,
   spacing,
@@ -107,6 +119,11 @@ export default function ActivityAttendanceScreen() {
   const [error, setError] =
     useState("");
 
+  const [scannerOpen, setScannerOpen] =
+    useState(false);
+  const [scanError, setScanError] =
+    useState("");
+
   const loadAttendance =
     useCallback(async () => {
       if (!activityId) {
@@ -147,6 +164,120 @@ export default function ActivityAttendanceScreen() {
     }, [loadAttendance])
   );
 
+  async function handleProfileScan(
+    rawValue: string
+  ) {
+    if (!activityId) {
+      setScanError(
+        "Activity information is missing."
+      );
+      return false;
+    }
+
+    const payload =
+      parseProfileQrPayload(rawValue);
+
+    if (!payload) {
+      setScanError(
+        "This is not a valid SK Local Profile QR."
+      );
+      return false;
+    }
+
+    try {
+      setScanError("");
+
+      const youth =
+        await resolveYouthFromProfileQr(
+          payload
+        );
+
+      if (!youth) {
+        setScannerOpen(false);
+
+        Alert.alert(
+          "Youth Not Registered",
+          `${payload.fullName} is not yet linked to the Youth Registry. Register the profile first, then scan again for attendance.`,
+          [
+            {
+              text: "Cancel",
+              style: "cancel",
+            },
+            {
+              text: "Register Youth",
+              onPress: () =>
+                router.push({
+                  pathname: "/add-youth",
+                  params: {
+                    profileId:
+                      payload.profileId,
+                    fullName:
+                      payload.fullName,
+                    birthday:
+                      payload.birthDate,
+                    sex: payload.sex,
+                    purokSitio:
+                      payload.purokSitio,
+                    education:
+                      payload.educationStatus ||
+                      "",
+                    employmentStatus:
+                      payload.employmentStatus ||
+                      "",
+                    youthClassification:
+                      payload.youthClassification ||
+                      "",
+                  },
+                }),
+            },
+          ]
+        );
+
+        return true;
+      }
+
+      const user =
+        await getCurrentSessionUser();
+
+      if (!user) {
+        setScannerOpen(false);
+        router.replace("/login");
+        return true;
+      }
+
+      const result =
+        await markYouthPresentAtActivity({
+          activityId,
+          youthId: youth.id,
+          createdBy: user.id,
+        });
+
+      setScannerOpen(false);
+      await loadAttendance();
+
+      Alert.alert(
+        result === "already-present"
+          ? "Already Present"
+          : "Attendance Recorded",
+        result === "already-present"
+          ? `${youth.fullName} is already marked Present for this activity.`
+          : `${youth.fullName} has been marked Present.`
+      );
+
+      return true;
+    } catch (scanFailure) {
+      console.error(
+        "Activity QR attendance error:",
+        scanFailure
+      );
+
+      setScanError(
+        "Unable to record attendance from this Profile QR. Please try again."
+      );
+      return false;
+    }
+  }
+
   async function handleStatusPress(
     record: ActivityParticipantRecord
   ) {
@@ -169,6 +300,21 @@ export default function ActivityAttendanceScreen() {
         "Unable to update attendance."
       );
     }
+  }
+
+  if (scannerOpen) {
+    return (
+      <QRScanner
+        title="Activity Attendance"
+        hint="Scan a registered youth Profile QR"
+        errorMessage={scanError}
+        onClose={() => {
+          setScannerOpen(false);
+          setScanError("");
+        }}
+        onScan={handleProfileScan}
+      />
+    );
   }
 
   const presentCount =
@@ -229,11 +375,28 @@ export default function ActivityAttendanceScreen() {
           </Text>
         </View>
 
-        <Text
-          style={styles.summaryHint}
+        <Pressable
+          style={({ pressed }) => [
+            styles.scanButton,
+            pressed &&
+              styles.scanButtonPressed,
+          ]}
+          onPress={() => {
+            setScanError("");
+            setScannerOpen(true);
+          }}
         >
-          Tap status to change
-        </Text>
+          <Ionicons
+            name="scan-outline"
+            size={18}
+            color={colors.primary}
+          />
+          <Text
+            style={styles.scanButtonText}
+          >
+            Scan QR
+          </Text>
+        </Pressable>
       </View>
 
       {error ? (
@@ -265,9 +428,9 @@ export default function ActivityAttendanceScreen() {
           <Text
             style={styles.stateText}
           >
-            Add participants first,
+            Scan a registered youth QR,
             {"\n"}
-            then mark their attendance.
+            or add participants manually.
           </Text>
         </View>
       ) : (
@@ -353,7 +516,7 @@ export default function ActivityAttendanceScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
   header: {
     height: 60,
@@ -405,15 +568,28 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.xs,
     color: colors.textMuted,
   },
-  summaryHint: {
-    minWidth: 118,
-    flexShrink: 0,
-    paddingLeft: spacing.sm,
-    paddingRight: 2,
-    fontSize: 10,
-    lineHeight: 14,
-    color: colors.textMuted,
-    textAlign: "right",
+  scanButton: {
+    minHeight: 40,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginLeft: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    borderRadius: 12,
+    backgroundColor: colors.white,
+    elevation: 2,
+  },
+  scanButtonText: {
+    fontSize: typography.fontSize.xs,
+    fontWeight:
+      typography.fontWeight.semibold,
+    color: colors.primary,
+  },
+  scanButtonPressed: {
+    opacity: 0.72,
   },
   errorText: {
     margin: spacing.lg,

@@ -1,3 +1,6 @@
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import {
   router,
@@ -34,6 +37,51 @@ import {
   typography,
 } from "../theme";
 
+function parseDate(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
+function toIsoDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function formatDate(value: string) {
+  const date = parseDate(value);
+
+  if (!date) {
+    return "Select due date (optional)";
+  }
+
+  return date.toLocaleDateString("en-PH", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 export default function InventoryBorrowScreen() {
   const params =
     useLocalSearchParams<{
@@ -61,6 +109,8 @@ export default function InventoryBorrowScreen() {
 
   const [dueDate, setDueDate] =
     useState("");
+  const [showDueDatePicker, setShowDueDatePicker] =
+    useState(false);
 
   const [notes, setNotes] =
     useState("");
@@ -125,6 +175,23 @@ export default function InventoryBorrowScreen() {
       };
     }, [itemId])
   );
+
+  function handleDueDateChange(
+    event: DateTimePickerEvent,
+    selectedDate?: Date
+  ) {
+    setShowDueDatePicker(false);
+
+    if (
+      event.type === "dismissed" ||
+      !selectedDate
+    ) {
+      return;
+    }
+
+    setDueDate(toIsoDate(selectedDate));
+    setError("");
+  }
 
   async function handleBorrow() {
     if (!itemId || !item) {
@@ -360,15 +427,36 @@ export default function InventoryBorrowScreen() {
               Due Date
             </Text>
 
-            <TextInput
-              style={styles.input}
-              value={dueDate}
-              onChangeText={setDueDate}
-              placeholder="YYYY-MM-DD (optional)"
-              placeholderTextColor={
-                colors.textMuted
+            <Pressable
+              style={styles.dateButton}
+              onPress={() =>
+                setShowDueDatePicker(true)
               }
-            />
+              disabled={isSaving}
+            >
+              <Ionicons
+                name="calendar-outline"
+                size={19}
+                color={colors.textMuted}
+              />
+
+              <Text
+                style={[
+                  styles.dateButtonText,
+                  !dueDate &&
+                    styles.datePlaceholder,
+                ]}
+                numberOfLines={1}
+              >
+                {formatDate(dueDate)}
+              </Text>
+
+              <Ionicons
+                name="chevron-down-outline"
+                size={18}
+                color={colors.textSecondary}
+              />
+            </Pressable>
 
             <Text style={styles.label}>
               Notes
@@ -422,6 +510,19 @@ export default function InventoryBorrowScreen() {
             </Pressable>
           </ScrollView>
         )}
+
+        {showDueDatePicker && (
+          <DateTimePicker
+            value={
+              parseDate(dueDate) ??
+              new Date()
+            }
+            mode="date"
+            display="default"
+            minimumDate={new Date()}
+            onChange={handleDueDateChange}
+          />
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -430,7 +531,7 @@ export default function InventoryBorrowScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
   flex: {
     flex: 1,
@@ -489,6 +590,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   warningBox: {
+    elevation: 3,
     marginTop: spacing.lg,
     padding: spacing.md,
     borderRadius: 12,
@@ -514,6 +616,27 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     fontSize: typography.fontSize.sm,
     color: colors.text,
+  },
+  dateButton: {
+    elevation: 2,
+    minHeight: 52,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    backgroundColor: colors.white,
+  },
+  dateButtonText: {
+    flex: 1,
+    minWidth: 0,
+    marginHorizontal: spacing.sm,
+    fontSize: typography.fontSize.sm,
+    color: colors.text,
+  },
+  datePlaceholder: {
+    color: colors.textMuted,
   },
   notesInput: {
     minHeight: 90,

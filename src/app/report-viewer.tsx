@@ -590,8 +590,7 @@ export default function ReportViewerScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor:
-      colors.background,
+    backgroundColor: "#E3F2FD",
   },
   header: {
     height: 60,
@@ -716,6 +715,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   sectionCount: {
+    elevation: 3,
     minWidth: 28,
     height: 28,
     flexShrink: 0,
@@ -834,6 +834,7 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   exportNote: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.xl,

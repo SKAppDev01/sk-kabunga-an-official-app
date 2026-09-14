@@ -21,17 +21,25 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import QRScanner from "../components/QRScanner";
+import {
+  parseProfileQrPayload,
+} from "../services/profile-qr-data";
 import {
   addMeetingAttendance,
   AttendanceStatus,
   deleteMeetingAttendance,
   getMeetingAttendance,
+  markYouthPresentAtMeeting,
   MeetingAttendanceRecord,
   updateMeetingAttendanceStatus,
 } from "../services/meetings";
 import {
   getCurrentSessionUser,
 } from "../services/session";
+import {
+  resolveYouthFromProfileQr,
+} from "../services/youth";
 import {
   colors,
   spacing,
@@ -97,6 +105,11 @@ export default function MeetingAttendanceScreen() {
   const [error, setError] =
     useState("");
 
+  const [scannerOpen, setScannerOpen] =
+    useState(false);
+  const [scanError, setScanError] =
+    useState("");
+
   const loadAttendance =
     useCallback(async () => {
       if (!meetingId) {
@@ -135,6 +148,120 @@ export default function MeetingAttendanceScreen() {
       loadAttendance();
     }, [loadAttendance])
   );
+
+  async function handleProfileScan(
+    rawValue: string
+  ) {
+    if (!meetingId) {
+      setScanError(
+        "Meeting information is missing."
+      );
+      return false;
+    }
+
+    const payload =
+      parseProfileQrPayload(rawValue);
+
+    if (!payload) {
+      setScanError(
+        "This is not a valid SK Local Profile QR."
+      );
+      return false;
+    }
+
+    try {
+      setScanError("");
+
+      const youth =
+        await resolveYouthFromProfileQr(
+          payload
+        );
+
+      if (!youth) {
+        setScannerOpen(false);
+
+        Alert.alert(
+          "Youth Not Registered",
+          `${payload.fullName} is not yet linked to the Youth Registry. Register the profile first, then scan again for attendance.`,
+          [
+            {
+              text: "Cancel",
+              style: "cancel",
+            },
+            {
+              text: "Register Youth",
+              onPress: () =>
+                router.push({
+                  pathname: "/add-youth",
+                  params: {
+                    profileId:
+                      payload.profileId,
+                    fullName:
+                      payload.fullName,
+                    birthday:
+                      payload.birthDate,
+                    sex: payload.sex,
+                    purokSitio:
+                      payload.purokSitio,
+                    education:
+                      payload.educationStatus ||
+                      "",
+                    employmentStatus:
+                      payload.employmentStatus ||
+                      "",
+                    youthClassification:
+                      payload.youthClassification ||
+                      "",
+                  },
+                }),
+            },
+          ]
+        );
+
+        return true;
+      }
+
+      const user =
+        await getCurrentSessionUser();
+
+      if (!user) {
+        setScannerOpen(false);
+        router.replace("/login");
+        return true;
+      }
+
+      const result =
+        await markYouthPresentAtMeeting({
+          meetingId,
+          youthId: youth.id,
+          createdBy: user.id,
+        });
+
+      setScannerOpen(false);
+      await loadAttendance();
+
+      Alert.alert(
+        result === "already-present"
+          ? "Already Present"
+          : "Attendance Recorded",
+        result === "already-present"
+          ? `${youth.fullName} is already marked Present for this meeting.`
+          : `${youth.fullName} has been marked Present.`
+      );
+
+      return true;
+    } catch (scanFailure) {
+      console.error(
+        "Meeting QR attendance error:",
+        scanFailure
+      );
+
+      setScanError(
+        "Unable to record attendance from this Profile QR. Please try again."
+      );
+      return false;
+    }
+  }
 
   async function handleAdd() {
     if (!meetingId) {
@@ -234,6 +361,21 @@ export default function MeetingAttendanceScreen() {
     );
   }
 
+  if (scannerOpen) {
+    return (
+      <QRScanner
+        title="Meeting Attendance"
+        hint="Scan a registered youth Profile QR"
+        errorMessage={scanError}
+        onClose={() => {
+          setScannerOpen(false);
+          setScanError("");
+        }}
+        onScan={handleProfileScan}
+      />
+    );
+  }
+
   const presentCount =
     records.filter(
       (record) =>
@@ -294,17 +436,42 @@ export default function MeetingAttendanceScreen() {
         </View>
 
         <View style={styles.summary}>
-          <Text
-            style={styles.summaryText}
-          >
-            {presentCount} present
-          </Text>
+          <View style={styles.summaryStats}>
+            <Text
+              style={styles.summaryText}
+            >
+              {presentCount} present
+            </Text>
 
-          <Text
-            style={styles.summaryMuted}
+            <Text
+              style={styles.summaryMuted}
+            >
+              {records.length} total
+            </Text>
+          </View>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.scanButton,
+              pressed &&
+                styles.buttonPressed,
+            ]}
+            onPress={() => {
+              setScanError("");
+              setScannerOpen(true);
+            }}
           >
-            {records.length} total
-          </Text>
+            <Ionicons
+              name="scan-outline"
+              size={18}
+              color={colors.primary}
+            />
+            <Text
+              style={styles.scanButtonText}
+            >
+              Scan QR
+            </Text>
+          </Pressable>
         </View>
 
         {showAdd ? (
@@ -424,8 +591,8 @@ export default function MeetingAttendanceScreen() {
             <Text
               style={styles.stateText}
             >
-              Tap + to add meeting
-              attendees.
+              Tap + to add an attendee,
+              or scan a registered youth QR.
             </Text>
           </View>
         ) : (
@@ -539,7 +706,7 @@ export default function MeetingAttendanceScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
   flex: {
     flex: 1,
@@ -581,6 +748,30 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
+  summaryStats: {
+    flex: 1,
+    minWidth: 0,
+  },
+  scanButton: {
+    minHeight: 40,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginLeft: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    borderRadius: 12,
+    backgroundColor: colors.white,
+    elevation: 2,
+  },
+  scanButtonText: {
+    fontSize: typography.fontSize.xs,
+    fontWeight:
+      typography.fontWeight.semibold,
+    color: colors.primary,
+  },
   summaryText: {
     fontSize: typography.fontSize.sm,
     fontWeight:
@@ -592,6 +783,7 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   addPanel: {
+    elevation: 3,
     margin: spacing.lg,
     padding: spacing.md,
     borderWidth: 1,

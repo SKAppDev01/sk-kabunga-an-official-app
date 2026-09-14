@@ -509,7 +509,7 @@ export default function MeetingResolutionsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
   flex: {
     flex: 1,
@@ -543,6 +543,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   addPanel: {
+    elevation: 3,
     margin: spacing.lg,
     padding: spacing.md,
     borderWidth: 1,

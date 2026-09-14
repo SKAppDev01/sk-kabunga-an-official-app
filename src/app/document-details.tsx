@@ -530,8 +530,7 @@ export default function DocumentDetailsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor:
-      colors.background,
+    backgroundColor: "#E3F2FD",
   },
   header: {
     height: 60,
@@ -715,6 +714,7 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   attachmentBox: {
+    elevation: 3,
     minHeight: 70,
     flexDirection: "row",
     alignItems: "center",
@@ -723,6 +723,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 14,
+    backgroundColor: colors.surface,
   },
   attachmentText: {
     flex: 1,

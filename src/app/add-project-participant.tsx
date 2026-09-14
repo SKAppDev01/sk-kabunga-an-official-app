@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
   header: {
     height: 60,
@@ -297,7 +297,8 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   headerSpacer: { width: 44 },
-  scrollView: { flex: 1 },
+  scrollView: {
+    backgroundColor: "#E3F2FD", flex: 1 },
   content: {
     padding: spacing.xl,
     paddingBottom: spacing.xxxl,
@@ -322,6 +323,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   input: {
+    elevation: 2,
     minHeight: 54,
     borderWidth: 1,
     borderColor: colors.border,

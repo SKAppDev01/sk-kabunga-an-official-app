@@ -131,6 +131,7 @@ const TABLES: TableConfig[] = [
     label: "Youth Registry",
     columns: [
       "id",
+      "profile_id",
       "full_name",
       "birthday",
       "sex",
@@ -255,6 +256,7 @@ const TABLES: TableConfig[] = [
     columns: [
       "id",
       "meeting_id",
+      "youth_id",
       "attendee_name",
       "attendee_role",
       "attendance_status",
@@ -993,7 +995,11 @@ export async function previewDataImport(
             localRow
           ) ===
           stableStringify(
-            packageRow
+            getRowForInsert(
+              config,
+              packageRow,
+              new Map()
+            )
           )
         ) {
           tableDuplicate += 1;
@@ -1133,7 +1139,7 @@ async function insertRow(
       )
       VALUES (${placeholders})
     `,
-    ...values
+    ...(values as any[])
   );
 }
 
@@ -2104,7 +2110,7 @@ async function insertBackupRow(
       )
       VALUES (${placeholders})
     `,
-    ...values
+    ...(values as any[])
   );
 }
 

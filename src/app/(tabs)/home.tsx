@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { CivicBackground } from "../../components/CivicBackground";
+
 import {
   getCurrentSessionUser,
   SessionUser,
@@ -28,6 +30,14 @@ import {
   FinanceSummary,
   getFinanceSummary,
 } from "../../services/finance";
+import {
+  ActivityRecord,
+  getActivitiesList,
+} from "../../services/activities";
+import {
+  MeetingRecord,
+  getMeetingsList,
+} from "../../services/meetings";
 import { isYouthMemberRole } from "../../services/access";
 import { colors, spacing, typography } from "../../theme";
 
@@ -38,6 +48,10 @@ export default function HomeScreen() {
     useState(true);
   const [projects, setProjects] =
     useState<LocalProject[]>([]);
+  const [activities, setActivities] =
+    useState<ActivityRecord[]>([]);
+  const [meetings, setMeetings] =
+    useState<MeetingRecord[]>([]);
   const [recentActivities, setRecentActivities] =
     useState<AppActivity[]>([]);
   const [financeSummary, setFinanceSummary] =
@@ -49,6 +63,8 @@ export default function HomeScreen() {
       allocationCount: 0,
       expenseCount: 0,
     });
+  const [currentTime, setCurrentTime] =
+    useState(() => Date.now());
 
   useFocusEffect(
     useCallback(() => {
@@ -74,12 +90,26 @@ export default function HomeScreen() {
           const [
             projectList,
             finance,
+            activityRecords,
+            meetingRecords,
             activityList,
           ] = await Promise.all([
             getAllLocalProjects(),
             getFinanceSummary(),
             youthMember
-              ? Promise.resolve([] as AppActivity[])
+              ? Promise.resolve(
+                  [] as ActivityRecord[]
+                )
+              : getActivitiesList(),
+            youthMember
+              ? Promise.resolve(
+                  [] as MeetingRecord[]
+                )
+              : getMeetingsList(),
+            youthMember
+              ? Promise.resolve(
+                  [] as AppActivity[]
+                )
               : getRecentAppActivities(5),
           ]);
 
@@ -87,6 +117,8 @@ export default function HomeScreen() {
 
           setCurrentUser(user);
           setProjects(projectList);
+          setActivities(activityRecords);
+          setMeetings(meetingRecords);
           setRecentActivities(activityList);
           setFinanceSummary(finance);
         } catch (error) {
@@ -109,6 +141,20 @@ export default function HomeScreen() {
 
       return () => {
         active = false;
+      };
+    }, [])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      setCurrentTime(Date.now());
+
+      const timer = setInterval(() => {
+        setCurrentTime(Date.now());
+      }, 60_000);
+
+      return () => {
+        clearInterval(timer);
       };
     }, [])
   );
@@ -254,17 +300,234 @@ export default function HomeScreen() {
     });
   }
 
+  type UpcomingEvent = {
+    id: string;
+    type: "Meeting" | "Activity";
+    title: string;
+    date: string;
+    time: string | null;
+    location: string | null;
+  };
+
+  function getEventDateTime(
+    dateValue: string,
+    timeValue: string | null
+  ) {
+    const dateMatch = dateValue.match(
+      /^(\d{4})-(\d{2})-(\d{2})$/
+    );
+
+    if (!dateMatch) {
+      return null;
+    }
+
+    const timeMatch = timeValue?.match(
+      /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/
+    );
+
+    // If an event has no saved time, keep it upcoming
+    // until the end of that date.
+    const hours = timeMatch
+      ? Number(timeMatch[1])
+      : 23;
+    const minutes = timeMatch
+      ? Number(timeMatch[2])
+      : 59;
+    const seconds = timeMatch?.[3]
+      ? Number(timeMatch[3])
+      : timeMatch
+        ? 0
+        : 59;
+
+    const date = new Date(
+      Number(dateMatch[1]),
+      Number(dateMatch[2]) - 1,
+      Number(dateMatch[3]),
+      hours,
+      minutes,
+      seconds,
+      timeMatch ? 0 : 999
+    );
+
+    if (Number.isNaN(date.getTime())) {
+      return null;
+    }
+
+    return date;
+  }
+
+  function isFinishedStatus(
+    status: string | null | undefined
+  ) {
+    const normalized = status
+      ?.trim()
+      .toLowerCase();
+
+    return (
+      normalized === "completed" ||
+      normalized === "cancelled" ||
+      normalized === "canceled"
+    );
+  }
+
+  function formatUpcomingDate(
+    value: string
+  ) {
+    const match = value.match(
+      /^(\d{4})-(\d{2})-(\d{2})$/
+    );
+
+    if (!match) {
+      return value;
+    }
+
+    const date = new Date(
+      Number(match[1]),
+      Number(match[2]) - 1,
+      Number(match[3])
+    );
+
+    return date.toLocaleDateString(
+      "en-PH",
+      {
+        month: "short",
+        day: "numeric",
+        year:
+          date.getFullYear() !==
+          new Date().getFullYear()
+            ? "numeric"
+            : undefined,
+      }
+    );
+  }
+
+  function formatUpcomingTime(
+    value: string | null
+  ) {
+    if (!value) {
+      return null;
+    }
+
+    const match = value.match(
+      /^(\d{1,2}):(\d{2})(?::\d{2})?$/
+    );
+
+    if (!match) {
+      return value;
+    }
+
+    const date = new Date();
+    date.setHours(
+      Number(match[1]),
+      Number(match[2]),
+      0,
+      0
+    );
+
+    return date.toLocaleTimeString(
+      "en-PH",
+      {
+        hour: "numeric",
+        minute: "2-digit",
+      }
+    );
+  }
+
+  function openUpcomingEvent(
+    event: UpcomingEvent
+  ) {
+    router.push({
+      pathname:
+        event.type === "Meeting"
+          ? "/meeting-details"
+          : "/activity-details",
+      params: {
+        id: event.id,
+      },
+    });
+  }
+
+  const allUpcomingEvents: UpcomingEvent[] = [
+    ...meetings
+      .filter(
+        (meeting) =>
+          !isFinishedStatus(meeting.status)
+      )
+      .map(
+        (meeting): UpcomingEvent => ({
+          id: meeting.id,
+          type: "Meeting",
+          title: meeting.title,
+          date: meeting.meetingDate,
+          time: meeting.meetingTime,
+          location: meeting.location,
+        })
+      ),
+    ...activities
+      .filter(
+        (activity) =>
+          !isFinishedStatus(activity.status)
+      )
+      .map(
+        (activity): UpcomingEvent => ({
+          id: activity.id,
+          type: "Activity",
+          title: activity.title,
+          date: activity.activityDate,
+          time: activity.activityTime,
+          location: activity.location,
+        })
+      ),
+  ]
+    .filter((event) => {
+      const eventDateTime =
+        getEventDateTime(
+          event.date,
+          event.time
+        );
+
+      return (
+        eventDateTime !== null &&
+        eventDateTime.getTime() >= currentTime
+      );
+    })
+    .sort((a, b) => {
+      const aDateTime = getEventDateTime(
+        a.date,
+        a.time
+      );
+      const bDateTime = getEventDateTime(
+        b.date,
+        b.time
+      );
+
+      return (
+        (aDateTime?.getTime() ??
+          Number.MAX_SAFE_INTEGER) -
+        (bDateTime?.getTime() ??
+          Number.MAX_SAFE_INTEGER)
+      );
+    });
+
+  // Keep the Home screen compact. The dedicated
+  // Upcoming Events screen can show the full list.
+  const upcomingEvents =
+    allUpcomingEvents.slice(0, 5);
+
   const youthMember =
     isYouthMemberRole(currentUser?.role);
   const showAdminActivity =
     Boolean(currentUser) && !youthMember;
 
   return (
-    <SafeAreaView
-      style={styles.safeArea}
-      edges={["top"]}
-    >
-      <ScrollView
+    <View style={styles.background}>
+      <CivicBackground />
+
+      <SafeAreaView
+        style={styles.safeArea}
+        edges={["top"]}
+      >
+        <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -276,23 +539,61 @@ export default function HomeScreen() {
             </Text>
 
             <Text style={styles.greeting}>
-              {isLoading
-                ? "Welcome"
-                : `Welcome, ${getFirstName()}`}
+              <Text style={styles.greetingBlue}>
+                {isLoading ? "Welcome" : "Welcome,"}
+              </Text>
+
+              {!isLoading ? (
+                <Text style={styles.greetingRed}>
+                  {` ${getFirstName()}`}
+                </Text>
+              ) : null}
             </Text>
+
+            <View style={styles.flagAccent}>
+              <View
+                style={[
+                  styles.flagAccentSection,
+                  styles.flagAccentBlue,
+                ]}
+              />
+
+              <View
+                style={[
+                  styles.flagAccentSection,
+                  styles.flagAccentGold,
+                ]}
+              />
+
+              <View
+                style={[
+                  styles.flagAccentSection,
+                  styles.flagAccentRed,
+                ]}
+              />
+            </View>
 
             <Text style={styles.role}>
               {currentUser?.role || "SK Official"}
             </Text>
           </View>
 
-          <View style={styles.profileIcon}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.profileIcon,
+              pressed && styles.profileIconPressed,
+            ]}
+            onPress={() => router.push("/profile")}
+            accessibilityRole="button"
+            accessibilityLabel="Open profile"
+            hitSlop={6}
+          >
             <Ionicons
               name="person-outline"
               size={25}
               color={colors.primary}
             />
-          </View>
+          </Pressable>
         </View>
 
         <Text style={styles.sectionTitle}>
@@ -300,16 +601,6 @@ export default function HomeScreen() {
         </Text>
 
         <View style={styles.summaryGrid}>
-          <SummaryCard
-            icon="folder-outline"
-            value={
-              isLoading
-                ? "—"
-                : String(projects.length)
-            }
-            label="Projects"
-          />
-
           <SummaryCard
             icon="wallet-outline"
             value={
@@ -320,25 +611,50 @@ export default function HomeScreen() {
                   )
             }
             label="Budget"
+            variant="budget"
           />
 
-          <SummaryCard
-            icon="receipt-outline"
-            value={
-              isLoading
-                ? "—"
-                : formatCompactCurrency(
-                    financeSummary.totalExpenses
-                  )
-            }
-            label="Expenses"
-          />
+          <View style={styles.summaryCompactRow}>
+            <SummaryCard
+              icon="folder-outline"
+              value={
+                isLoading
+                  ? "—"
+                  : String(projects.length)
+              }
+              label="Projects"
+              variant="compact"
+              tone="blue"
+            />
 
-          <SummaryCard
-            icon="calendar-outline"
-            value="0"
-            label="Activities"
-          />
+            <SummaryCard
+              icon="receipt-outline"
+              value={
+                isLoading
+                  ? "—"
+                  : formatCompactCurrency(
+                      financeSummary.totalExpenses
+                    )
+              }
+              label="Expenses"
+              variant="compact"
+              tone="red"
+            />
+
+            <SummaryCard
+              icon="calendar-outline"
+              value={
+                isLoading
+                  ? "—"
+                  : String(
+                      activities.length
+                    )
+              }
+              label="Activities"
+              variant="compact"
+              tone="gold"
+            />
+          </View>
         </View>
 
         <View style={styles.sectionHeaderRow}>
@@ -370,25 +686,148 @@ export default function HomeScreen() {
           </Pressable>
         </View>
 
-        <View style={styles.upcomingRow}>
-          <View style={styles.upcomingIcon}>
-            <Ionicons
-              name="calendar-outline"
-              size={23}
-              color={colors.primary}
-            />
-          </View>
+        <View style={styles.sectionCard}>
+          {isLoading ? (
+          <View style={styles.upcomingRow}>
+            <View style={styles.upcomingIcon}>
+              <Ionicons
+                name="calendar-outline"
+                size={23}
+                color={colors.primary}
+              />
+            </View>
 
-          <View style={styles.emptyContent}>
-            <Text style={styles.emptyTitle}>
-              No upcoming activities
-            </Text>
-
-            <Text style={styles.emptyText}>
-              Scheduled activities and meetings
-              will appear here.
-            </Text>
+            <View style={styles.emptyContent}>
+              <Text style={styles.emptyTitle}>
+                Loading upcoming events...
+              </Text>
+            </View>
           </View>
+        ) : upcomingEvents.length === 0 ? (
+          <View style={styles.upcomingRow}>
+            <View style={styles.upcomingIcon}>
+              <Ionicons
+                name="calendar-outline"
+                size={23}
+                color={colors.primary}
+              />
+            </View>
+
+            <View style={styles.emptyContent}>
+              <Text style={styles.emptyTitle}>
+                No upcoming events
+              </Text>
+
+              <Text style={styles.emptyText}>
+                Future scheduled meetings and
+                planned activities will appear
+                here automatically.
+              </Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.upcomingList}>
+            {upcomingEvents.map(
+              (event, index) => {
+                const formattedTime =
+                  formatUpcomingTime(
+                    event.time
+                  );
+
+                return (
+                  <Pressable
+                    key={`${event.type}-${event.id}`}
+                    style={({ pressed }) => [
+                      styles.upcomingEventRow,
+                      index <
+                        upcomingEvents.length - 1 &&
+                        styles.upcomingEventBorder,
+                      pressed &&
+                        styles.upcomingEventPressed,
+                    ]}
+                    onPress={() =>
+                      openUpcomingEvent(event)
+                    }
+                  >
+                    <View
+                      style={styles.upcomingEventIcon}
+                    >
+                      <Ionicons
+                        name={
+                          event.type === "Meeting"
+                            ? "calendar-outline"
+                            : "people-circle-outline"
+                        }
+                        size={20}
+                        color={colors.primary}
+                      />
+                    </View>
+
+                    <View
+                      style={
+                        styles.upcomingEventContent
+                      }
+                    >
+                      <View
+                        style={
+                          styles.upcomingEventTopRow
+                        }
+                      >
+                        <Text
+                          style={
+                            styles.upcomingEventTitle
+                          }
+                          numberOfLines={1}
+                        >
+                          {event.title}
+                        </Text>
+
+                        <Text
+                          style={
+                            styles.upcomingEventType
+                          }
+                        >
+                          {event.type}
+                        </Text>
+                      </View>
+
+                      <Text
+                        style={
+                          styles.upcomingEventMeta
+                        }
+                        numberOfLines={1}
+                      >
+                        {formatUpcomingDate(
+                          event.date
+                        )}
+                        {formattedTime
+                          ? ` • ${formattedTime}`
+                          : ""}
+                      </Text>
+
+                      {event.location ? (
+                        <Text
+                          style={
+                            styles.upcomingEventLocation
+                          }
+                          numberOfLines={1}
+                        >
+                          {event.location}
+                        </Text>
+                      ) : null}
+                    </View>
+
+                    <Ionicons
+                      name="chevron-forward-outline"
+                      size={19}
+                      color={colors.textMuted}
+                    />
+                  </Pressable>
+                );
+              }
+            )}
+          </View>
+        )}
         </View>
 
         {showAdminActivity && (
@@ -527,8 +966,9 @@ export default function HomeScreen() {
         </View>
           </>
         )}
-      </ScrollView>
-    </SafeAreaView>
+        </ScrollView>
+      </SafeAreaView>
+    </View>
   );
 }
 
@@ -536,6 +976,8 @@ function SummaryCard({
   icon,
   value,
   label,
+  variant,
+  tone = "blue",
 }: {
   icon:
     | "folder-outline"
@@ -544,36 +986,172 @@ function SummaryCard({
     | "calendar-outline";
   value: string;
   label: string;
+  variant: "budget" | "compact";
+  tone?: "blue" | "red" | "gold";
 }) {
+  const compact = variant === "compact";
+  const accentColor =
+    tone === "red"
+      ? "#CE1126"
+      : tone === "gold"
+        ? "#B77900"
+        : colors.primary;
+
+  const accentStyle =
+    tone === "red"
+      ? styles.summaryAccentRed
+      : tone === "gold"
+        ? styles.summaryAccentGold
+        : styles.summaryAccentBlue;
+
+  const iconTintStyle =
+    tone === "red"
+      ? styles.summaryIconRedTint
+      : tone === "gold"
+        ? styles.summaryIconGoldTint
+        : styles.summaryIconBlueTint;
+
+  if (!compact) {
+    return (
+      <View
+        style={[
+          styles.summaryCard,
+          styles.summaryBudgetCard,
+        ]}
+      >
+        <View
+          style={[
+            styles.summaryInsetAccent,
+            styles.summaryBudgetInsetAccent,
+            styles.summaryAccentBlue,
+          ]}
+        />
+
+        <View style={styles.summaryBudgetHeader}>
+          <View style={styles.summaryBudgetHeading}>
+            <View
+              style={[
+                styles.summaryIcon,
+                styles.summaryBudgetIcon,
+                styles.summaryIconBlueTint,
+              ]}
+            >
+              <Ionicons
+                name={icon}
+                size={23}
+                color={colors.primary}
+              />
+            </View>
+
+            <View style={styles.summaryBudgetTitleBlock}>
+              <Text style={styles.summaryBudgetLabel}>
+                {label}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.summaryBudgetBadge}>
+            <Text style={styles.summaryBudgetBadgeText}>
+              TOTAL
+            </Text>
+          </View>
+        </View>
+
+        <Text
+          style={styles.summaryBudgetValue}
+          numberOfLines={1}
+        >
+          {value}
+        </Text>
+
+        <View style={styles.summaryBudgetFooter}>
+          <Text style={styles.summaryBudgetFootnote}>
+            Allocated funds
+          </Text>
+
+          <View style={styles.summaryBudgetFlagAccent}>
+            <View style={styles.summaryBudgetFlagBlue} />
+            <View style={styles.summaryBudgetFlagGold} />
+            <View style={styles.summaryBudgetFlagRed} />
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.summaryCard}>
-      <View style={styles.summaryIcon}>
+    <View
+      style={[
+        styles.summaryCard,
+        styles.summaryCompactCard,
+      ]}
+    >
+      <View
+        style={[
+          styles.summaryInsetAccent,
+          styles.summaryCompactInsetAccent,
+          accentStyle,
+        ]}
+      />
+
+      <View
+        style={[
+          styles.summaryIcon,
+          styles.summaryCompactIcon,
+          iconTintStyle,
+        ]}
+      >
         <Ionicons
           name={icon}
-          size={22}
-          color={colors.primary}
+          size={20}
+          color={accentColor}
         />
       </View>
 
-      <Text style={styles.summaryValue}>
+      <Text
+        style={[
+          styles.summaryValue,
+          styles.summaryCompactValue,
+        ]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.78}
+      >
         {value}
       </Text>
 
-      <Text style={styles.summaryLabel}>
-        {label}
-      </Text>
+      <View style={styles.summaryCompactFooter}>
+        <Text
+          style={[
+            styles.summaryLabel,
+            styles.summaryCompactLabel,
+          ]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.78}
+        >
+          {label}
+        </Text>
+
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    backgroundColor: "#E3F2FD",
+  },
+
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "transparent",
   },
 
   scrollView: {
     flex: 1,
+    backgroundColor: "transparent",
   },
 
   content: {
@@ -601,10 +1179,50 @@ const styles = StyleSheet.create({
   },
 
   greeting: {
+    width: "100%",
+    minWidth: 0,
     marginTop: spacing.xs,
     fontSize: typography.fontSize.xl,
+    lineHeight: 34,
     fontWeight: typography.fontWeight.bold,
-    color: colors.text,
+    flexShrink: 1,
+  },
+
+  greetingBlue: {
+    color: "#0038A8",
+  },
+
+  greetingRed: {
+    color: "#CE1126",
+  },
+
+  flagAccent: {
+    width: 118,
+    height: 4,
+    flexDirection: "row",
+    overflow: "hidden",
+    marginTop: 5,
+    borderRadius: 999,
+    backgroundColor: colors.border,
+  },
+
+  flagAccentSection: {
+    height: "100%",
+  },
+
+  flagAccentBlue: {
+    flex: 5,
+    backgroundColor: "#0038A8",
+  },
+
+  flagAccentGold: {
+    flex: 1,
+    backgroundColor: "#FCD116",
+  },
+
+  flagAccentRed: {
+    flex: 5,
+    backgroundColor: "#CE1126",
   },
 
   role: {
@@ -622,6 +1240,11 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(37,99,235,0.08)",
   },
 
+  profileIconPressed: {
+    opacity: 0.65,
+    transform: [{ scale: 0.96 }],
+  },
+
   sectionTitle: {
     fontSize: typography.fontSize.lg,
     fontWeight: typography.fontWeight.bold,
@@ -630,21 +1253,170 @@ const styles = StyleSheet.create({
   },
 
   summaryGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
+    width: "100%",
     marginBottom: spacing.xl,
   },
 
+  summaryCompactRow: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+
   summaryCard: {
-    width: "48%",
-    minHeight: 135,
-    padding: spacing.lg,
-    marginBottom: spacing.md,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: "rgba(148,163,184,0.28)",
     borderRadius: 18,
     backgroundColor: colors.white,
+    elevation: 5,
+    shadowColor: "#0F172A",
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.12,
+    shadowRadius: 7,
+  },
+
+  summaryBudgetCard: {
+    width: "100%",
+    minHeight: 156,
+    padding: spacing.lg,
+    marginBottom: spacing.md,
+    borderColor: "rgba(37,99,235,0.22)",
+  },
+
+  summaryInsetAccent: {
+    position: "absolute",
+    top: 9,
+    height: 3,
+    borderRadius: 999,
+  },
+
+  summaryBudgetInsetAccent: {
+    left: spacing.lg,
+    right: spacing.lg,
+  },
+
+  summaryCompactInsetAccent: {
+    left: spacing.sm,
+    right: spacing.sm,
+  },
+
+  summaryBudgetHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  summaryBudgetHeading: {
+    minWidth: 0,
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  summaryBudgetIcon: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+  },
+
+  summaryBudgetTitleBlock: {
+    minWidth: 0,
+    flex: 1,
+    marginLeft: spacing.md,
+  },
+
+
+  summaryBudgetLabel: {
+    marginTop: 1,
+    fontSize: typography.fontSize.md,
+    lineHeight: 21,
+    fontWeight: typography.fontWeight.semibold,
+    color: colors.text,
+  },
+
+  summaryBudgetBadge: {
+    flexShrink: 0,
+    marginLeft: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: "rgba(37,99,235,0.08)",
+  },
+
+  summaryBudgetBadgeText: {
+    fontSize: 9,
+    lineHeight: 11,
+    letterSpacing: 0.8,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.primary,
+  },
+
+  summaryBudgetValue: {
+    marginTop: spacing.md,
+    fontSize: 42,
+    lineHeight: 50,
+    fontWeight: typography.fontWeight.bold,
+    color: colors.text,
+  },
+
+  summaryBudgetFooter: {
+    marginTop: spacing.sm,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  summaryBudgetFootnote: {
+    fontSize: typography.fontSize.xs,
+    lineHeight: 17,
+    color: colors.textSecondary,
+  },
+
+  summaryBudgetFlagAccent: {
+    width: 54,
+    height: 4,
+    flexDirection: "row",
+    overflow: "hidden",
+    borderRadius: 999,
+  },
+
+  summaryBudgetFlagBlue: {
+    flex: 5,
+    backgroundColor: "#0038A8",
+  },
+
+  summaryBudgetFlagGold: {
+    flex: 1,
+    backgroundColor: "#FCD116",
+  },
+
+  summaryBudgetFlagRed: {
+    flex: 5,
+    backgroundColor: "#CE1126",
+  },
+
+  summaryCompactCard: {
+    width: "31.5%",
+    minHeight: 126,
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
+  },
+
+
+  summaryAccentBlue: {
+    backgroundColor: "#2563EB",
+  },
+
+  summaryAccentRed: {
+    backgroundColor: "#CE1126",
+  },
+
+  summaryAccentGold: {
+    backgroundColor: "#E6A700",
   },
 
   summaryIcon: {
@@ -653,21 +1425,56 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(37,99,235,0.08)",
+  },
+
+  summaryCompactIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 11,
+  },
+
+  summaryIconBlueTint: {
+    backgroundColor: "rgba(37,99,235,0.09)",
+  },
+
+  summaryIconRedTint: {
+    backgroundColor: "rgba(206,17,38,0.08)",
+  },
+
+  summaryIconGoldTint: {
+    backgroundColor: "rgba(230,167,0,0.11)",
   },
 
   summaryValue: {
-    marginTop: spacing.md,
-    fontSize: typography.fontSize.xl,
-    fontWeight: typography.fontWeight.bold,
     color: colors.text,
+    fontWeight: typography.fontWeight.bold,
+  },
+
+  summaryCompactValue: {
+    marginTop: spacing.sm,
+    fontSize: typography.fontSize.lg,
+    lineHeight: 25,
   },
 
   summaryLabel: {
-    marginTop: spacing.xs,
-    fontSize: typography.fontSize.sm,
     color: colors.textSecondary,
   },
+
+  summaryCompactFooter: {
+    minWidth: 0,
+    marginTop: spacing.xs,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  summaryCompactLabel: {
+    flex: 1,
+    minWidth: 0,
+    fontSize: typography.fontSize.xs,
+    lineHeight: 17,
+    fontWeight: typography.fontWeight.semibold,
+  },
+
 
   sectionCard: {
     padding: spacing.lg,
@@ -676,15 +1483,114 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 18,
     backgroundColor: colors.white,
+  
+    elevation: 4,
+    shadowColor: "#0F172A",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.10,
+    shadowRadius: 5,
+  },
+
+  upcomingCard: {
+    width: "100%",
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 18,
+    backgroundColor: "#FFFFFF",
+    elevation: 4,
+    shadowColor: "#0F172A",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.10,
+    shadowRadius: 5,
   },
 
   upcomingRow: {
     flexDirection: "row",
     alignItems: "flex-start",
-    marginBottom: spacing.xl,
     paddingVertical: spacing.lg,
+  },
+
+  upcomingList: {
+    width: "100%",
+  },
+
+  upcomingEventRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: spacing.md,
+  },
+
+  upcomingEventBorder: {
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
+  },
+
+  upcomingEventPressed: {
+    opacity: 0.65,
+  },
+
+  upcomingEventContent: {
+    flex: 1,
+    minWidth: 0,
+    marginLeft: spacing.md,
+    marginRight: spacing.sm,
+  },
+
+  upcomingEventTopRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+
+  upcomingEventTitle: {
+    flex: 1,
+    minWidth: 0,
+    marginRight: spacing.sm,
+    fontSize: typography.fontSize.sm,
+    lineHeight: 20,
+    fontWeight: typography.fontWeight.semibold,
+    color: colors.text,
+  },
+
+  upcomingEventType: {
+    flexShrink: 0,
+    fontSize: typography.fontSize.xs,
+    lineHeight: 18,
+    fontWeight: typography.fontWeight.semibold,
+    color: colors.primary,
+  },
+
+  upcomingEventMeta: {
+    width: "100%",
+    marginTop: 3,
+    fontSize: typography.fontSize.xs,
+    lineHeight: 18,
+    color: colors.textSecondary,
+  },
+
+  upcomingEventLocation: {
+    width: "100%",
+    marginTop: 2,
+    fontSize: typography.fontSize.xs,
+    lineHeight: 18,
+    color: colors.textMuted,
+  },
+
+  upcomingEventIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(37,99,235,0.08)",
   },
 
   upcomingIcon: {

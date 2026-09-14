@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import {
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -18,8 +19,13 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import QRScanner from "../components/QRScanner";
+import {
+  parseProfileQrPayload,
+} from "../services/profile-qr-data";
 import {
   getYouthList,
+  resolveYouthFromProfileQr,
   YouthRecord,
 } from "../services/youth";
 import {
@@ -67,6 +73,21 @@ export default function YouthRegistryScreen() {
     filtersExpanded,
     setFiltersExpanded,
   ] = useState(false);
+
+  const [
+    draftAgeFilter,
+    setDraftAgeFilter,
+  ] = useState<AgeFilter>("all");
+
+  const [
+    draftPurokFilter,
+    setDraftPurokFilter,
+  ] = useState("all");
+
+  const [scannerOpen, setScannerOpen] =
+    useState(false);
+  const [scanError, setScanError] =
+    useState("");
 
   const purokOptions = useMemo(() => {
     const values = new Set<string>();
@@ -198,6 +219,103 @@ export default function YouthRegistryScreen() {
     }, [])
   );
 
+  async function handleProfileScan(
+    rawValue: string
+  ) {
+    const payload =
+      parseProfileQrPayload(rawValue);
+
+    if (!payload) {
+      setScanError(
+        "This is not a valid SK Local Profile QR."
+      );
+      return false;
+    }
+
+    try {
+      setScanError("");
+
+      const existing =
+        await resolveYouthFromProfileQr(
+          payload
+        );
+
+      if (existing) {
+        setScannerOpen(false);
+
+        Alert.alert(
+          "Already Registered",
+          `${existing.fullName} is already in the Youth Registry.`,
+          [
+            {
+              text: "Close",
+              style: "cancel",
+            },
+            {
+              text: "View Profile",
+              onPress: () =>
+                router.push({
+                  pathname:
+                    "/youth-profile",
+                  params: {
+                    id: existing.id,
+                  },
+                }),
+            },
+          ]
+        );
+
+        return true;
+      }
+
+      setScannerOpen(false);
+
+      router.push({
+        pathname: "/add-youth",
+        params: {
+          profileId: payload.profileId,
+          fullName: payload.fullName,
+          birthday: payload.birthDate,
+          sex: payload.sex,
+          purokSitio: payload.purokSitio,
+          education:
+            payload.educationStatus || "",
+          employmentStatus:
+            payload.employmentStatus || "",
+          youthClassification:
+            payload.youthClassification || "",
+        },
+      });
+
+      return true;
+    } catch (error) {
+      console.error(
+        "Profile QR youth lookup error:",
+        error
+      );
+
+      setScanError(
+        "Unable to read this Profile QR. Please try again."
+      );
+      return false;
+    }
+  }
+
+  if (scannerOpen) {
+    return (
+      <QRScanner
+        title="Register Youth by QR"
+        hint="Scan the youth member's Profile QR"
+        errorMessage={scanError}
+        onClose={() => {
+          setScannerOpen(false);
+          setScanError("");
+        }}
+        onScan={handleProfileScan}
+      />
+    );
+  }
+
   function getSecondaryText(
     record: YouthRecord
   ) {
@@ -314,16 +432,12 @@ export default function YouthRegistryScreen() {
               pressed &&
                 styles.inlineFilterButtonPressed,
             ]}
-            onPress={() =>
-              setFiltersExpanded(
-                (current) => !current
-              )
-            }
-            accessibilityLabel={
-              filtersExpanded
-                ? "Hide filters"
-                : "Show filters"
-            }
+            onPress={() => {
+              setDraftAgeFilter(ageFilter);
+              setDraftPurokFilter(purokFilter);
+              setFiltersExpanded(true);
+            }}
+            accessibilityLabel="Open filters"
           >
             <Ionicons
               name="options-outline"
@@ -353,114 +467,128 @@ export default function YouthRegistryScreen() {
           </Pressable>
         </View>
 
-        <View style={styles.filtersSection}>
-          {filtersExpanded ? (
-            <View
-              style={styles.filtersExpanded}
-            >
-              <View
-                style={styles.filterHeader}
-              >
-                <Text
-                  style={styles.filterHelpText}
-                >
-                  Filter youth records
-                </Text>
+        <Pressable
+          style={({ pressed }) => [
+            styles.scanProfileButton,
+            pressed &&
+              styles.scanProfileButtonPressed,
+          ]}
+          onPress={() => {
+            setScanError("");
+            setScannerOpen(true);
+          }}
+          accessibilityLabel="Scan Profile QR"
+        >
+          <Ionicons
+            name="scan-outline"
+            size={20}
+            color={colors.primary}
+          />
+          <Text
+            style={
+              styles.scanProfileButtonText
+            }
+          >
+            Scan Profile QR
+          </Text>
+        </Pressable>
 
-                {hasActiveFilters ? (
-                  <Pressable
-                    onPress={() => {
-                      setAgeFilter("all");
-                      setPurokFilter("all");
-                    }}
-                    hitSlop={8}
-                  >
-                    <Text
-                      style={
-                        styles.clearFiltersText
-                      }
-                    >
-                      Clear
-                    </Text>
-                  </Pressable>
-                ) : null}
+        {filtersExpanded ? (
+          <>
+            <Pressable
+              style={styles.filterPopoverBackdrop}
+              onPress={() =>
+                setFiltersExpanded(false)
+              }
+              accessibilityLabel="Close filters"
+            />
+
+            <View style={styles.filterPopover}>
+              <View style={styles.filterHeader}>
+                <View style={styles.filterHeaderText}>
+                  <Text style={styles.filterTitle}>
+                    Filter youth
+                  </Text>
+                  <Text style={styles.filterHelpText}>
+                    Narrow the Youth Registry by age and Purok/Sitio.
+                  </Text>
+                </View>
+
+                <Pressable
+                  style={styles.filterCloseButton}
+                  onPress={() =>
+                    setFiltersExpanded(false)
+                  }
+                  hitSlop={8}
+                  accessibilityLabel="Close filters"
+                >
+                  <Ionicons
+                    name="close"
+                    size={20}
+                    color={colors.textSecondary}
+                  />
+                </Pressable>
               </View>
 
               <Text style={styles.filterLabel}>
                 Age
               </Text>
 
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={
-                  false
-                }
-                contentContainerStyle={
-                  styles.filterChipsRow
-                }
-              >
-                {AGE_FILTERS.map(
-                  (option) => {
-                    const selected =
-                      ageFilter ===
-                      option.key;
+              <View style={styles.filterChipsWrap}>
+                {AGE_FILTERS.map((option) => {
+                  const selected =
+                    draftAgeFilter === option.key;
 
-                    return (
-                      <Pressable
-                        key={option.key}
+                  return (
+                    <Pressable
+                      key={option.key}
+                      style={[
+                        styles.filterChip,
+                        selected &&
+                          styles.filterChipSelected,
+                      ]}
+                      onPress={() =>
+                        setDraftAgeFilter(option.key)
+                      }
+                    >
+                      <Text
                         style={[
-                          styles.filterChip,
+                          styles.filterChipText,
                           selected &&
-                            styles.filterChipSelected,
+                            styles.filterChipTextSelected,
                         ]}
-                        onPress={() =>
-                          setAgeFilter(
-                            option.key
-                          )
-                        }
                       >
-                        <Text
-                          style={[
-                            styles.filterChipText,
-                            selected &&
-                              styles.filterChipTextSelected,
-                          ]}
-                        >
-                          {option.label}
-                        </Text>
-                      </Pressable>
-                    );
-                  }
-                )}
-              </ScrollView>
+                        {option.label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
 
               <Text style={styles.filterLabel}>
                 Purok / Sitio
               </Text>
 
               <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={
-                  false
-                }
-                contentContainerStyle={
-                  styles.filterChipsRow
-                }
+                style={styles.purokOptionsScroll}
+                contentContainerStyle={styles.filterChipsWrap}
+                showsVerticalScrollIndicator={false}
+                nestedScrollEnabled
               >
                 <Pressable
                   style={[
                     styles.filterChip,
-                    purokFilter === "all" &&
+                    draftPurokFilter === "all" &&
                       styles.filterChipSelected,
                   ]}
                   onPress={() =>
-                    setPurokFilter("all")
+                    setDraftPurokFilter("all")
                   }
                 >
                   <Text
                     style={[
                       styles.filterChipText,
-                      purokFilter === "all" &&
+                      draftPurokFilter === "all" &&
                         styles.filterChipTextSelected,
                     ]}
                   >
@@ -468,58 +596,50 @@ export default function YouthRegistryScreen() {
                   </Text>
                 </Pressable>
 
-                {purokOptions.map(
-                  (purok) => {
-                    const selected =
-                      purokFilter === purok;
+                {purokOptions.map((purok) => {
+                  const selected =
+                    draftPurokFilter === purok;
 
-                    return (
-                      <Pressable
-                        key={purok}
+                  return (
+                    <Pressable
+                      key={purok}
+                      style={[
+                        styles.filterChip,
+                        selected &&
+                          styles.filterChipSelected,
+                      ]}
+                      onPress={() =>
+                        setDraftPurokFilter(purok)
+                      }
+                    >
+                      <Text
                         style={[
-                          styles.filterChip,
+                          styles.filterChipText,
                           selected &&
-                            styles.filterChipSelected,
+                            styles.filterChipTextSelected,
                         ]}
-                        onPress={() =>
-                          setPurokFilter(
-                            purok
-                          )
-                        }
+                        numberOfLines={1}
                       >
-                        <Text
-                          style={[
-                            styles.filterChipText,
-                            selected &&
-                              styles.filterChipTextSelected,
-                          ]}
-                          numberOfLines={1}
-                        >
-                          {purok}
-                        </Text>
-                      </Pressable>
-                    );
-                  }
-                )}
+                        {purok}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
 
                 <Pressable
                   style={[
                     styles.filterChip,
-                    purokFilter ===
-                      "__not_set__" &&
+                    draftPurokFilter === "__not_set__" &&
                       styles.filterChipSelected,
                   ]}
                   onPress={() =>
-                    setPurokFilter(
-                      "__not_set__"
-                    )
+                    setDraftPurokFilter("__not_set__")
                   }
                 >
                   <Text
                     style={[
                       styles.filterChipText,
-                      purokFilter ===
-                        "__not_set__" &&
+                      draftPurokFilter === "__not_set__" &&
                         styles.filterChipTextSelected,
                     ]}
                   >
@@ -527,9 +647,42 @@ export default function YouthRegistryScreen() {
                   </Text>
                 </Pressable>
               </ScrollView>
+
+              <View style={styles.filterActions}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.filterResetButton,
+                    pressed && styles.filterActionPressed,
+                  ]}
+                  onPress={() => {
+                    setDraftAgeFilter("all");
+                    setDraftPurokFilter("all");
+                  }}
+                >
+                  <Text style={styles.filterResetText}>
+                    Reset
+                  </Text>
+                </Pressable>
+
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.filterApplyButton,
+                    pressed && styles.filterActionPressed,
+                  ]}
+                  onPress={() => {
+                    setAgeFilter(draftAgeFilter);
+                    setPurokFilter(draftPurokFilter);
+                    setFiltersExpanded(false);
+                  }}
+                >
+                  <Text style={styles.filterApplyText}>
+                    Apply filters
+                  </Text>
+                </Pressable>
+              </View>
             </View>
-          ) : null}
-        </View>
+          </>
+        ) : null}
 
         {isLoading ? (
           <View style={styles.centerState}>
@@ -552,8 +705,8 @@ export default function YouthRegistryScreen() {
             </Text>
 
             <Text style={styles.stateText}>
-              Add a youth record to start building the
-              local Youth Registry.
+              Add a youth record or scan a Profile QR to
+              start building the local Youth Registry.
             </Text>
           </View>
         ) : filteredYouth.length === 0 ? (
@@ -673,7 +826,7 @@ export default function YouthRegistryScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
 
   header: {
@@ -728,12 +881,14 @@ const styles = StyleSheet.create({
   },
 
   screen: {
+    backgroundColor: "#E3F2FD",
     flex: 1,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.lg,
   },
 
   searchContainer: {
+    elevation: 2,
     minHeight: 50,
     flexDirection: "row",
     alignItems: "center",
@@ -805,36 +960,92 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
 
-  filtersSection: {
-    marginBottom: spacing.md,
-  },
-
-  filtersExpanded: {
-    marginTop: spacing.sm,
-    padding: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 14,
-    backgroundColor: colors.white,
-  },
-
-  filterHeader: {
-    minHeight: 28,
+  scanProfileButton: {
+    minHeight: 48,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    justifyContent: "center",
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.lg,
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+    borderRadius: 14,
+    backgroundColor: colors.white,
+    elevation: 2,
   },
 
-  filterHelpText: {
-    fontSize: typography.fontSize.xs,
-    color: colors.textMuted,
-  },
-
-  clearFiltersText: {
+  scanProfileButtonText: {
     fontSize: typography.fontSize.sm,
     fontWeight:
       typography.fontWeight.semibold,
     color: colors.primary,
+  },
+
+  scanProfileButtonPressed: {
+    opacity: 0.72,
+  },
+
+  filterPopoverBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 20,
+  },
+
+  filterPopover: {
+    position: "absolute",
+    top: spacing.lg + 54,
+    right: spacing.xl,
+    zIndex: 30,
+    width: "88%",
+    maxWidth: 360,
+    padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 18,
+    backgroundColor: colors.white,
+    elevation: 10,
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+  },
+
+  filterHeader: {
+    minHeight: 42,
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: spacing.sm,
+  },
+
+  filterHeaderText: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  filterTitle: {
+    fontSize: typography.fontSize.md,
+    fontWeight:
+      typography.fontWeight.bold,
+    color: colors.text,
+  },
+
+  filterHelpText: {
+    marginTop: 2,
+    fontSize: typography.fontSize.xs,
+    lineHeight: 18,
+    color: colors.textMuted,
+  },
+
+  filterCloseButton: {
+    width: 36,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 18,
+    backgroundColor: "#F8FAFC",
   },
 
   filterLabel: {
@@ -846,13 +1057,18 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
 
-  filterChipsRow: {
-    paddingRight: spacing.md,
+  filterChipsWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: spacing.sm,
   },
 
+  purokOptionsScroll: {
+    maxHeight: 128,
+  },
+
   filterChip: {
-    minHeight: 36,
+    minHeight: 34,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: spacing.md,
@@ -878,6 +1094,51 @@ const styles = StyleSheet.create({
     fontWeight:
       typography.fontWeight.semibold,
     color: colors.primary,
+  },
+
+  filterActions: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+  },
+
+  filterResetButton: {
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    backgroundColor: colors.white,
+  },
+
+  filterResetText: {
+    fontSize: typography.fontSize.xs,
+    fontWeight:
+      typography.fontWeight.semibold,
+    color: colors.textSecondary,
+  },
+
+  filterApplyButton: {
+    flex: 1,
+    minHeight: 44,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.md,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+  },
+
+  filterApplyText: {
+    fontSize: typography.fontSize.xs,
+    fontWeight:
+      typography.fontWeight.bold,
+    color: colors.white,
+  },
+
+  filterActionPressed: {
+    opacity: 0.78,
   },
 
   listTitle: {

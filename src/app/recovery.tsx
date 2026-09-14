@@ -855,6 +855,7 @@ const styles = StyleSheet.create({
   },
 
   input: {
+    elevation: 2,
     height: 54,
     borderWidth: 1,
     borderColor: colors.border,
@@ -867,6 +868,7 @@ const styles = StyleSheet.create({
   },
 
   passwordContainer: {
+    elevation: 2,
     height: 54,
     flexDirection: "row",
     alignItems: "center",
@@ -928,6 +930,7 @@ const styles = StyleSheet.create({
   },
 
   accountBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -961,6 +964,7 @@ const styles = StyleSheet.create({
   },
 
   questionBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     paddingHorizontal: spacing.lg,
@@ -991,6 +995,7 @@ const styles = StyleSheet.create({
   },
 
   formErrorBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginBottom: spacing.lg,

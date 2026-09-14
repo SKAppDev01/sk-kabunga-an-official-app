@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
 
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
 
   header: {
@@ -306,6 +306,7 @@ const styles = StyleSheet.create({
   },
 
   scrollView: {
+    backgroundColor: "#E3F2FD",
     flex: 1,
   },
 
@@ -350,6 +351,15 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.md,
     color: colors.text,
     backgroundColor: colors.white,
+
+    elevation: 3,
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
 
   descriptionInput: {
@@ -376,8 +386,18 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
     padding: spacing.lg,
     borderRadius: 16,
-    backgroundColor:
-      "rgba(37,99,235,0.06)",
+    backgroundColor: "#EFF6FF",
+    borderWidth: 1,
+    borderColor: "#BFDBFE",
+
+    elevation: 1,
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
   },
 
   exampleText: {

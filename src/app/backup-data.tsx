@@ -427,8 +427,7 @@ export default function BackupDataScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor:
-      colors.background,
+    backgroundColor: "#E3F2FD",
   },
   header: {
     height: 60,
@@ -504,6 +503,7 @@ const styles = StyleSheet.create({
       colors.textSecondary,
   },
   summaryBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "center",
     marginTop: spacing.xl,
@@ -579,6 +579,7 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   warningBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.xl,
@@ -596,6 +597,7 @@ const styles = StyleSheet.create({
     color: "#92400E",
   },
   infoBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.md,

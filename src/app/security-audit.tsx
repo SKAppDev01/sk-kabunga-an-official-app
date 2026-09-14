@@ -644,8 +644,7 @@ export default function SecurityAuditScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor:
-      colors.background,
+    backgroundColor: "#E3F2FD",
   },
   header: {
     height: 60,
@@ -740,6 +739,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   accountBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "center",
     padding: spacing.md,
@@ -832,6 +832,7 @@ const styles = StyleSheet.create({
       typography.fontWeight.semibold,
   },
   summaryBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: spacing.lg,
@@ -925,6 +926,7 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   infoBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.lg,
@@ -1070,6 +1072,7 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   footerBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.xl,

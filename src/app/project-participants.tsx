@@ -312,7 +312,7 @@ export default function ProjectParticipantsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
   header: {
     height: 60,
@@ -337,11 +337,13 @@ const styles = StyleSheet.create({
   },
   headerSpacer: { width: 44 },
   screen: {
+    backgroundColor: "#E3F2FD",
     flex: 1,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.lg,
   },
   summaryCard: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "center",
     padding: spacing.lg,
@@ -405,6 +407,7 @@ const styles = StyleSheet.create({
   list: { flex: 1 },
   listContent: { paddingBottom: 100 },
   participantCard: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     padding: spacing.lg,

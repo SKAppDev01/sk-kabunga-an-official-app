@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker, {
-  DateTimePickerEvent,
+  type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import * as DocumentPicker from "expo-document-picker";
 import {
@@ -187,19 +187,19 @@ export default function AddDocumentScreen() {
   );
 
   function handleDateValueChange(
-    _event: DateTimePickerEvent,
+    event: DateTimePickerEvent,
     selectedDate?: Date
   ) {
-    if (!selectedDate) {
+    setShowDatePicker(false);
+
+    if (
+      event.type === "dismissed" ||
+      !selectedDate
+    ) {
       return;
     }
 
     setDocumentDate(selectedDate);
-    setShowDatePicker(false);
-  }
-
-  function handleDateDismiss() {
-    setShowDatePicker(false);
   }
 
   async function handlePickAttachment() {
@@ -921,17 +921,8 @@ export default function AddDocumentScreen() {
           <DateTimePicker
             value={documentDate}
             mode="date"
-            display={
-              Platform.OS === "android"
-                ? "default"
-                : "spinner"
-            }
-            onValueChange={
-              handleDateValueChange
-            }
-            onDismiss={
-              handleDateDismiss
-            }
+            display="default"
+            onChange={handleDateValueChange}
           />
         ) : null}
       </KeyboardAvoidingView>
@@ -942,8 +933,7 @@ export default function AddDocumentScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor:
-      colors.background,
+    backgroundColor: "#E3F2FD",
   },
   flex: {
     flex: 1,
@@ -1011,6 +1001,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   input: {
+    elevation: 2,
     minHeight: 52,
     paddingHorizontal:
       spacing.md,
@@ -1025,6 +1016,7 @@ const styles = StyleSheet.create({
       colors.white,
   },
   multilineInput: {
+    elevation: 2,
     minHeight: 100,
     padding: spacing.md,
     borderWidth: 1,
@@ -1039,6 +1031,7 @@ const styles = StyleSheet.create({
       colors.white,
   },
   selector: {
+    elevation: 2,
     minHeight: 52,
     flexDirection: "row",
     alignItems: "center",
@@ -1125,6 +1118,7 @@ const styles = StyleSheet.create({
     color: colors.danger,
   },
   attachmentPicker: {
+    elevation: 2,
     minHeight: 70,
     flexDirection: "row",
     alignItems: "center",

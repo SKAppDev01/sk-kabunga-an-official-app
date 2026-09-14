@@ -1,5 +1,4 @@
 import { Ionicons } from "@expo/vector-icons";
-import type { BottomTabBarButtonProps } from "@react-navigation/bottom-tabs";
 import { Tabs } from "expo-router";
 import { Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -10,7 +9,7 @@ import {
 } from "../../theme";
 
 function NoRippleTabButton(
-  props: BottomTabBarButtonProps
+  props: any
 ) {
   return (
     <Pressable

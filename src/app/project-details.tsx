@@ -764,7 +764,7 @@ function InfoRow({
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
 
   header: {
@@ -815,7 +815,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  scrollView: { flex: 1 },
+  scrollView: {
+    backgroundColor: "#E3F2FD", flex: 1 },
 
   content: {
     padding: spacing.xl,
@@ -823,6 +824,7 @@ const styles = StyleSheet.create({
   },
 
   heroCard: {
+    elevation: 3,
     padding: spacing.xl,
     borderWidth: 1,
     borderColor: colors.border,
@@ -938,6 +940,7 @@ const styles = StyleSheet.create({
   },
 
   infoCard: {
+    elevation: 3,
     paddingHorizontal: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
@@ -987,6 +990,7 @@ const styles = StyleSheet.create({
   },
 
   expenseCard: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "center",
     minHeight: 78,
@@ -1027,6 +1031,7 @@ const styles = StyleSheet.create({
 
 
   participantCard: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "center",
     minHeight: 78,
@@ -1048,6 +1053,7 @@ const styles = StyleSheet.create({
   },
 
   descriptionCard: {
+    elevation: 3,
     minHeight: 110,
     padding: spacing.lg,
     borderWidth: 1,
@@ -1069,6 +1075,7 @@ const styles = StyleSheet.create({
   },
 
   actionsCard: {
+    elevation: 3,
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 18,

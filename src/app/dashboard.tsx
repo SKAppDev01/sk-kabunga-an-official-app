@@ -460,11 +460,11 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor:
-      colors.background,
+    backgroundColor: "#E3F2FD",
   },
 
   container: {
+    backgroundColor: "#E3F2FD",
     flex: 1,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.lg,
@@ -510,6 +510,7 @@ const styles = StyleSheet.create({
   },
 
   currentUserCard: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "center",
     padding: spacing.lg,
@@ -559,6 +560,7 @@ const styles = StyleSheet.create({
   },
 
   summaryCard: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "center",
     padding: spacing.lg,
@@ -612,6 +614,7 @@ const styles = StyleSheet.create({
   },
 
   accountCard: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "center",
     justifyContent:

@@ -27,6 +27,7 @@ export type AppActivityAction =
   | "youth_created"
   | "youth_updated"
   | "meeting_created"
+  | "meeting_status_updated"
   | "meeting_agenda_updated"
   | "meeting_minutes_updated"
   | "meeting_attendance_added"

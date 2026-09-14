@@ -1,3 +1,6 @@
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import {
   router,
@@ -69,6 +72,43 @@ function isValidDateText(value: string) {
   );
 }
 
+function parseExpenseDate(value: string) {
+  if (!isValidDateText(value)) {
+    return null;
+  }
+
+  const [year, month, day] =
+    value.split("-").map(Number);
+
+  return new Date(year, month - 1, day);
+}
+
+function toIsoDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(
+    date.getMonth() + 1
+  ).padStart(2, "0");
+  const day = String(
+    date.getDate()
+  ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function formatExpenseDate(value: string) {
+  const date = parseExpenseDate(value);
+
+  if (!date) {
+    return "Select date";
+  }
+
+  return date.toLocaleDateString("en-PH", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 export default function EditExpenseScreen() {
   const params =
     useLocalSearchParams<{
@@ -85,6 +125,10 @@ export default function EditExpenseScreen() {
     useState("");
   const [expenseDate, setExpenseDate] =
     useState("");
+  const [
+    showExpenseDatePicker,
+    setShowExpenseDatePicker,
+  ] = useState(false);
   const [notes, setNotes] =
     useState("");
   const [isYouthVisible, setIsYouthVisible] =
@@ -216,6 +260,29 @@ export default function EditExpenseScreen() {
       [field]: undefined,
       form: undefined,
     }));
+  }
+
+  function openExpenseDatePicker() {
+    setCategoryOpen(false);
+    setProjectOpen(false);
+    setShowExpenseDatePicker(true);
+  }
+
+  function handleExpenseDateChange(
+    event: DateTimePickerEvent,
+    selectedDate?: Date
+  ) {
+    setShowExpenseDatePicker(false);
+
+    if (
+      event.type === "dismissed" ||
+      !selectedDate
+    ) {
+      return;
+    }
+
+    setExpenseDate(toIsoDate(selectedDate));
+    clearError("expenseDate");
   }
 
   async function handleSave() {
@@ -499,12 +566,14 @@ export default function EditExpenseScreen() {
               Expense Date
             </Text>
 
-            <View
+            <Pressable
               style={[
                 styles.dateContainer,
                 errors.expenseDate &&
                   styles.inputError,
               ]}
+              onPress={openExpenseDatePicker}
+              disabled={isSaving}
             >
               <Ionicons
                 name="calendar-outline"
@@ -512,27 +581,22 @@ export default function EditExpenseScreen() {
                 color={colors.textMuted}
               />
 
-              <TextInput
-                style={styles.dateInput}
-                value={expenseDate}
-                onChangeText={(text) => {
-                  setExpenseDate(text);
+              <Text
+                style={[
+                  styles.dateInput,
+                  !expenseDate &&
+                    styles.placeholderText,
+                ]}
+              >
+                {formatExpenseDate(expenseDate)}
+              </Text>
 
-                  if (errors.expenseDate) {
-                    clearError(
-                      "expenseDate"
-                    );
-                  }
-                }}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={
-                  colors.textMuted
-                }
-                keyboardType="numbers-and-punctuation"
-                maxLength={10}
-                editable={!isSaving}
+              <Ionicons
+                name="chevron-down-outline"
+                size={18}
+                color={colors.textSecondary}
               />
-            </View>
+            </Pressable>
 
             {errors.expenseDate && (
               <Text style={styles.errorText}>
@@ -848,6 +912,18 @@ export default function EditExpenseScreen() {
             </Text>
           </Pressable>
         </ScrollView>
+
+        {showExpenseDatePicker && (
+          <DateTimePicker
+            value={
+              parseExpenseDate(expenseDate) ??
+              new Date()
+            }
+            mode="date"
+            display="default"
+            onChange={handleExpenseDateChange}
+          />
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -858,7 +934,7 @@ const styles = StyleSheet.create({
 
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
 
   header: {
@@ -908,6 +984,7 @@ const styles = StyleSheet.create({
   },
 
   scrollView: {
+    backgroundColor: "#E3F2FD",
     flex: 1,
   },
 
@@ -980,6 +1057,15 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.md,
     color: colors.text,
     backgroundColor: colors.white,
+
+    elevation: 3,
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
 
   amountContainer: {
@@ -991,6 +1077,15 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: spacing.lg,
     backgroundColor: colors.white,
+
+    elevation: 3,
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
 
   peso: {
@@ -1017,12 +1112,21 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     paddingHorizontal: spacing.lg,
     backgroundColor: colors.white,
+
+    elevation: 3,
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
 
   dateInput: {
     flex: 1,
-    height: "100%",
     marginLeft: spacing.sm,
+    marginRight: spacing.sm,
     fontSize: typography.fontSize.md,
     color: colors.text,
   },
@@ -1037,6 +1141,15 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 14,
     backgroundColor: colors.white,
+
+    elevation: 3,
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
 
   dropdownText: {
@@ -1057,6 +1170,15 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: colors.white,
     overflow: "hidden",
+
+    elevation: 4,
+    shadowColor: "#000000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.12,
+    shadowRadius: 5,
   },
 
   dropdownOption: {

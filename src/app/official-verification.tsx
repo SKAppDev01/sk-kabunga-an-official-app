@@ -347,7 +347,7 @@ export default function OfficialVerificationScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
 
   header: {
@@ -459,6 +459,7 @@ const styles = StyleSheet.create({
   },
 
   positionSelector: {
+    elevation: 2,
     minHeight: 56,
     flexDirection: "row",
     alignItems: "center",
@@ -494,6 +495,7 @@ const styles = StyleSheet.create({
   },
 
   positionMenu: {
+    elevation: 2,
     marginTop: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,
@@ -591,6 +593,7 @@ const styles = StyleSheet.create({
   },
 
   infoBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.xxxl,
@@ -598,6 +601,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 12,
+    backgroundColor: colors.surface,
   },
 
   infoText: {

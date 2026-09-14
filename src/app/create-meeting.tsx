@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker, {
-  DateTimePickerEvent,
+  type DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
 import { router } from "expo-router";
 import { useState } from "react";
@@ -151,25 +151,25 @@ export default function CreateMeetingScreen() {
   }
 
   function handleDateValueChange(
-    _event: DateTimePickerEvent,
+    event: DateTimePickerEvent,
     selectedDate?: Date
   ) {
-    if (!selectedDate) {
+    setShowDatePicker(false);
+
+    if (
+      event.type === "dismissed" ||
+      !selectedDate
+    ) {
       return;
     }
 
     setMeetingDate(selectedDate);
     clearError("meetingDate");
-    setShowDatePicker(false);
-  }
-
-  function handleDateDismiss() {
-    setShowDatePicker(false);
   }
 
   function handleTimeValueChange(
-    _event: DateTimePickerEvent,
-    selectedTime?: Date
+    _event: unknown,
+    selectedTime: Date
   ) {
     if (!selectedTime) {
       return;
@@ -651,18 +651,8 @@ export default function CreateMeetingScreen() {
               new Date()
             }
             mode="date"
-            display={
-              Platform.OS ===
-              "android"
-                ? "default"
-                : "spinner"
-            }
-            onValueChange={
-              handleDateValueChange
-            }
-            onDismiss={
-              handleDateDismiss
-            }
+            display="default"
+            onChange={handleDateValueChange}
           />
         ) : null}
 
@@ -695,7 +685,7 @@ export default function CreateMeetingScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
 
   flex: {
@@ -732,6 +722,7 @@ const styles = StyleSheet.create({
   },
 
   scrollView: {
+    backgroundColor: "#E3F2FD",
     flex: 1,
   },
 
@@ -768,6 +759,7 @@ const styles = StyleSheet.create({
   },
 
   input: {
+    elevation: 2,
     minHeight: 52,
     paddingHorizontal: spacing.md,
     borderWidth: 1,
@@ -779,6 +771,7 @@ const styles = StyleSheet.create({
   },
 
   selector: {
+    elevation: 2,
     minHeight: 52,
     flexDirection: "row",
     alignItems: "center",

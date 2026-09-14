@@ -510,8 +510,7 @@ export default function RestoreDataScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor:
-      colors.background,
+    backgroundColor: "#E3F2FD",
   },
   header: {
     height: 60,
@@ -587,6 +586,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   errorBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.md,
@@ -605,6 +605,7 @@ const styles = StyleSheet.create({
     color: colors.danger,
   },
   fileBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "center",
     marginTop: spacing.xl,
@@ -634,6 +635,7 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   summaryBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "center",
     marginTop: spacing.xl,
@@ -709,6 +711,7 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   dangerBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.xl,
@@ -726,6 +729,7 @@ const styles = StyleSheet.create({
     color: "#991B1B",
   },
   infoBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.md,

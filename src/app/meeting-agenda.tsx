@@ -275,7 +275,7 @@ export default function MeetingAgendaScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
   flex: {
     flex: 1,
@@ -335,6 +335,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   multilineInput: {
+    elevation: 2,
     minHeight: 260,
     padding: spacing.md,
     borderWidth: 1,

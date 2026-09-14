@@ -99,7 +99,7 @@ export default function FoundingOfficialSetupScreen() {
       isProcessing ||
       !authorizationData.trim()
     ) {
-      return;
+      return false;
     }
 
     try {
@@ -237,128 +237,7 @@ export default function FoundingOfficialSetupScreen() {
         <View style={styles.headerSpacer} />
       </View>
 
-      {mode === "scanner" ? (
-        <View style={styles.scannerScreen}>
-          <CameraView
-            key={scannerSession}
-            style={styles.fullCamera}
-            facing="back"
-            barcodeScannerSettings={{
-              barcodeTypes: ["qr"],
-            }}
-            onCameraReady={() => {
-              setCameraReady(true);
-              setError("");
-            }}
-            onMountError={(event) => {
-              console.error(
-                "Founding scanner camera error:",
-                event.nativeEvent?.message ||
-                  event
-              );
-
-              setCameraReady(false);
-              setError(
-                "The camera could not start. Close the scanner and try again."
-              );
-            }}
-            onBarcodeScanned={
-              hasScanned
-                ? undefined
-                : ({ data }) => {
-                    setHasScanned(true);
-                    processAuthorization(
-                      data
-                    );
-                  }
-            }
-          />
-
-          <View
-            pointerEvents="box-none"
-            style={styles.scannerOverlay}
-          >
-            {!cameraReady && !error ? (
-              <View style={styles.cameraStatus}>
-                <Ionicons
-                  name="camera-outline"
-                  size={20}
-                  color={colors.white}
-                />
-                <Text style={styles.cameraStatusText}>
-                  Starting camera...
-                </Text>
-              </View>
-            ) : null}
-
-            <View
-              pointerEvents="none"
-              style={styles.scanGuide}
-            >
-              <View
-                style={[
-                  styles.corner,
-                  styles.cornerTopLeft,
-                ]}
-              />
-              <View
-                style={[
-                  styles.corner,
-                  styles.cornerTopRight,
-                ]}
-              />
-              <View
-                style={[
-                  styles.corner,
-                  styles.cornerBottomLeft,
-                ]}
-              />
-              <View
-                style={[
-                  styles.corner,
-                  styles.cornerBottomRight,
-                ]}
-              />
-
-              <View style={styles.guideLabel}>
-                <Text style={styles.guideLabelText}>
-                  Place QR inside frame
-                </Text>
-              </View>
-            </View>
-
-            {error ? (
-              <View style={styles.errorPill}>
-                <Text style={styles.scanError}>
-                  {error}
-                </Text>
-              </View>
-            ) : null}
-
-            <Pressable
-              style={({ pressed }) => [
-                styles.cancelScanButton,
-                pressed && styles.cancelPressed,
-              ]}
-              onPress={() => {
-                setHasScanned(false);
-                setCameraReady(false);
-                setMode("instructions");
-              }}
-              disabled={isProcessing}
-            >
-              <Ionicons
-                name="close"
-                size={20}
-                color={colors.white}
-              />
-              <Text style={styles.cancelScanText}>
-                Cancel
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      ) : (
+      {(
         <ScrollView
           contentContainerStyle={
             styles.content
@@ -599,7 +478,7 @@ export default function FoundingOfficialSetupScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
 
   header: {
@@ -707,6 +586,7 @@ const styles = StyleSheet.create({
   },
 
   warningBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.xl,
@@ -824,7 +704,11 @@ const styles = StyleSheet.create({
   },
 
   referenceOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
   },
 
   topControls: {
@@ -930,6 +814,7 @@ const styles = StyleSheet.create({
   },
 
   scanErrorBox: {
+    elevation: 3,
     position: "absolute",
     left: spacing.xl,
     right: spacing.xl,
@@ -961,7 +846,11 @@ const styles = StyleSheet.create({
   },
 
   scannerOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: "absolute",
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -976,12 +865,6 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor:
       "rgba(0,0,0,0.48)",
-  },
-
-  cameraStatusText: {
-    marginLeft: spacing.sm,
-    fontSize: typography.fontSize.sm,
-    color: colors.white,
   },
 
   scanGuide: {

@@ -8,6 +8,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { CivicBackground } from "../../components/CivicBackground";
+
 import {
   colors,
   spacing,
@@ -16,14 +18,40 @@ import {
 
 export default function RecordsScreen() {
   return (
-    <SafeAreaView
-      style={styles.safeArea}
-      edges={["top"]}
-    >
+    <View style={styles.background}>
+      <CivicBackground />
+
+      <SafeAreaView
+        style={styles.safeArea}
+        edges={["top"]}
+      >
       <View style={styles.container}>
         <Text style={styles.title}>
           Records
         </Text>
+
+        <View style={styles.flagAccent}>
+          <View
+            style={[
+              styles.flagAccentSection,
+              styles.flagAccentBlue,
+            ]}
+          />
+
+          <View
+            style={[
+              styles.flagAccentSection,
+              styles.flagAccentGold,
+            ]}
+          />
+
+          <View
+            style={[
+              styles.flagAccentSection,
+              styles.flagAccentRed,
+            ]}
+          />
+        </View>
 
         <Text style={styles.subtitle}>
           Manage official SK records stored locally
@@ -287,14 +315,20 @@ export default function RecordsScreen() {
           </Text>
         </View>
       </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    backgroundColor: "#E3F2FD",
+  },
+
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "transparent",
   },
 
   container: {
@@ -304,14 +338,48 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: typography.fontSize.xxl,
+    width: "100%",
+    minWidth: 0,
+    fontSize:
+      typography.fontSize.xxl,
+    lineHeight: 36,
     fontWeight:
       typography.fontWeight.bold,
-    color: colors.text,
+    color: "#0038A8",
+    flexShrink: 1,
+  },
+
+  flagAccent: {
+    width: 104,
+    height: 4,
+    flexDirection: "row",
+    overflow: "hidden",
+    marginTop: 5,
+    borderRadius: 999,
+    backgroundColor: colors.border,
+  },
+
+  flagAccentSection: {
+    height: "100%",
+  },
+
+  flagAccentBlue: {
+    flex: 5,
+    backgroundColor: "#0038A8",
+  },
+
+  flagAccentGold: {
+    flex: 1,
+    backgroundColor: "#FCD116",
+  },
+
+  flagAccentRed: {
+    flex: 5,
+    backgroundColor: "#CE1126",
   },
 
   subtitle: {
-    marginTop: spacing.sm,
+    marginTop: spacing.md,
     marginBottom: spacing.xl,
     fontSize: typography.fontSize.sm,
     lineHeight: 20,

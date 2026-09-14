@@ -16,6 +16,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { CivicBackground } from "../../components/CivicBackground";
+
 import {
   getAllArchivedProjects,
   getAllLocalProjects,
@@ -111,16 +113,42 @@ export default function ProjectsScreen() {
     Boolean(currentUser) && !youthMember;
 
   return (
-    <SafeAreaView
-      style={styles.safeArea}
-      edges={["top"]}
-    >
+    <View style={styles.background}>
+      <CivicBackground />
+
+      <SafeAreaView
+        style={styles.safeArea}
+        edges={["top"]}
+      >
       <View style={styles.screen}>
         <View style={styles.header}>
           <View style={styles.headerText}>
             <Text style={styles.title}>
               Projects
             </Text>
+
+            <View style={styles.flagAccent}>
+              <View
+                style={[
+                  styles.flagAccentSection,
+                  styles.flagAccentBlue,
+                ]}
+              />
+
+              <View
+                style={[
+                  styles.flagAccentSection,
+                  styles.flagAccentGold,
+                ]}
+              />
+
+              <View
+                style={[
+                  styles.flagAccentSection,
+                  styles.flagAccentRed,
+                ]}
+              />
+            </View>
 
             <Text style={styles.subtitle}>
               {youthMember
@@ -353,14 +381,20 @@ export default function ProjectsScreen() {
         </Pressable>
         )}
       </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    backgroundColor: "#E3F2FD",
+  },
+
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "transparent",
   },
 
   screen: {
@@ -378,14 +412,48 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: typography.fontSize.xxl,
+    width: "100%",
+    minWidth: 0,
+    fontSize:
+      typography.fontSize.xxl,
+    lineHeight: 36,
     fontWeight:
       typography.fontWeight.bold,
-    color: colors.text,
+    color: "#0038A8",
+    flexShrink: 1,
+  },
+
+  flagAccent: {
+    width: 104,
+    height: 4,
+    flexDirection: "row",
+    overflow: "hidden",
+    marginTop: 5,
+    borderRadius: 999,
+    backgroundColor: colors.border,
+  },
+
+  flagAccentSection: {
+    height: "100%",
+  },
+
+  flagAccentBlue: {
+    flex: 5,
+    backgroundColor: "#0038A8",
+  },
+
+  flagAccentGold: {
+    flex: 1,
+    backgroundColor: "#FCD116",
+  },
+
+  flagAccentRed: {
+    flex: 5,
+    backgroundColor: "#CE1126",
   },
 
   subtitle: {
-    marginTop: spacing.xs,
+    marginTop: spacing.sm,
     fontSize: typography.fontSize.sm,
     color: colors.textSecondary,
   },
@@ -514,6 +582,15 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 18,
     backgroundColor: colors.white,
+  
+    elevation: 4,
+    shadowColor: "#0F172A",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.10,
+    shadowRadius: 5,
   },
 
   cardPressed: {

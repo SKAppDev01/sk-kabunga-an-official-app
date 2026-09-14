@@ -5,14 +5,18 @@ import {
   initializeDatabase,
 } from "../database/database";
 import {
-  recordAppActivity,
-} from "./app-activity";
-import {
   requireOfficialAccess,
 } from "./access";
+import {
+  recordAppActivity,
+} from "./app-activity";
+import type {
+  ProfileQrPayload,
+} from "./profile-qr-data";
 
 export type YouthRecord = {
   id: string;
+  profileId: string | null;
   fullName: string;
   birthday: string | null;
   age: number | null;
@@ -29,6 +33,7 @@ export type YouthRecord = {
 
 type YouthRow = {
   id: string;
+  profile_id: string | null;
   full_name: string;
   birthday: string | null;
   sex: string | null;
@@ -41,6 +46,24 @@ type YouthRow = {
   created_at: string;
   updated_at: string;
 };
+
+const YOUTH_SELECT = `
+  SELECT
+    id,
+    profile_id,
+    full_name,
+    birthday,
+    sex,
+    purok_sitio,
+    contact_number,
+    education,
+    employment_status,
+    youth_classification,
+    created_by,
+    created_at,
+    updated_at
+  FROM youth
+`;
 
 export function calculateYouthAge(
   birthday: string | null
@@ -83,6 +106,7 @@ function mapYouthRow(
 ): YouthRecord {
   return {
     id: row.id,
+    profileId: row.profile_id,
     fullName: row.full_name,
     birthday: row.birthday,
     age: calculateYouthAge(row.birthday),
@@ -109,20 +133,7 @@ export async function getYouthList():
   const rows =
     await db.getAllAsync<YouthRow>(
       `
-        SELECT
-          id,
-          full_name,
-          birthday,
-          sex,
-          purok_sitio,
-          contact_number,
-          education,
-          employment_status,
-          youth_classification,
-          created_by,
-          created_at,
-          updated_at
-        FROM youth
+        ${YOUTH_SELECT}
         ORDER BY full_name COLLATE NOCASE ASC
       `
     );
@@ -148,8 +159,8 @@ export async function getYouthCount() {
   return Number(row?.count) || 0;
 }
 
-
 type CreateYouthInput = {
+  profileId?: string;
   fullName: string;
   birthday?: string;
   sex?: string;
@@ -160,7 +171,6 @@ type CreateYouthInput = {
   youthClassification?: string;
   createdBy?: string;
 };
-
 
 export type UpdateYouthInput = {
   youthId: string;
@@ -221,6 +231,7 @@ function validateOptionalBirthday(
 }
 
 export async function createYouthRecord({
+  profileId,
   fullName,
   birthday,
   sex,
@@ -235,6 +246,8 @@ export async function createYouthRecord({
   await initializeDatabase();
   const db = await getDatabase();
 
+  const cleanProfileId =
+    profileId?.trim() || null;
   const cleanName = fullName.trim();
   const cleanBirthday =
     validateOptionalBirthday(birthday);
@@ -243,12 +256,34 @@ export async function createYouthRecord({
     throw new Error("FULL_NAME_REQUIRED");
   }
 
+  if (cleanProfileId) {
+    const existing =
+      await db.getFirstAsync<{
+        id: string;
+      }>(
+        `
+          SELECT id
+          FROM youth
+          WHERE profile_id = ?
+          LIMIT 1
+        `,
+        cleanProfileId
+      );
+
+    if (existing) {
+      throw new Error(
+        "PROFILE_ALREADY_REGISTERED"
+      );
+    }
+  }
+
   const id = Crypto.randomUUID();
 
   await db.runAsync(
     `
       INSERT INTO youth (
         id,
+        profile_id,
         full_name,
         birthday,
         sex,
@@ -259,9 +294,10 @@ export async function createYouthRecord({
         youth_classification,
         created_by
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `,
     id,
+    cleanProfileId,
     cleanName,
     cleanBirthday,
     sex?.trim() || null,
@@ -278,13 +314,14 @@ export async function createYouthRecord({
     entityType: "youth",
     entityId: id,
     subject: cleanName,
-    detail: "Youth registry record created",
+    detail: cleanProfileId
+      ? "Youth registry record created from Profile QR"
+      : "Youth registry record created",
     userId: createdBy || null,
   });
 
   return id;
 }
-
 
 export async function getYouthById(
   youthId: string
@@ -296,20 +333,7 @@ export async function getYouthById(
   const row =
     await db.getFirstAsync<YouthRow>(
       `
-        SELECT
-          id,
-          full_name,
-          birthday,
-          sex,
-          purok_sitio,
-          contact_number,
-          education,
-          employment_status,
-          youth_classification,
-          created_by,
-          created_at,
-          updated_at
-        FROM youth
+        ${YOUTH_SELECT}
         WHERE id = ?
         LIMIT 1
       `,
@@ -317,6 +341,109 @@ export async function getYouthById(
     );
 
   return row ? mapYouthRow(row) : null;
+}
+
+export async function getYouthByProfileId(
+  profileId: string
+): Promise<YouthRecord | null> {
+  await requireOfficialAccess();
+  await initializeDatabase();
+  const db = await getDatabase();
+
+  const cleanProfileId = profileId.trim();
+
+  if (!cleanProfileId) {
+    return null;
+  }
+
+  const row =
+    await db.getFirstAsync<YouthRow>(
+      `
+        ${YOUTH_SELECT}
+        WHERE profile_id = ?
+        LIMIT 1
+      `,
+      cleanProfileId
+    );
+
+  return row ? mapYouthRow(row) : null;
+}
+
+export async function resolveYouthFromProfileQr(
+  payload: ProfileQrPayload
+): Promise<YouthRecord | null> {
+  const direct =
+    await getYouthByProfileId(
+      payload.profileId
+    );
+
+  if (direct) {
+    return direct;
+  }
+
+  await requireOfficialAccess();
+  await initializeDatabase();
+  const db = await getDatabase();
+
+  const rows =
+    await db.getAllAsync<YouthRow>(
+      `
+        ${YOUTH_SELECT}
+        WHERE full_name = ? COLLATE NOCASE
+          AND birthday = ?
+          AND COALESCE(sex, '') = ? COLLATE NOCASE
+          AND COALESCE(purok_sitio, '') = ? COLLATE NOCASE
+        LIMIT 2
+      `,
+      payload.fullName.trim(),
+      payload.birthDate.trim(),
+      payload.sex.trim(),
+      payload.purokSitio.trim()
+    );
+
+  if (rows.length !== 1) {
+    return null;
+  }
+
+  const candidate = rows[0];
+
+  if (
+    candidate.profile_id &&
+    candidate.profile_id !==
+      payload.profileId
+  ) {
+    return null;
+  }
+
+  if (!candidate.profile_id) {
+    try {
+      await db.runAsync(
+        `
+          UPDATE youth
+          SET
+            profile_id = ?,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+            AND profile_id IS NULL
+        `,
+        payload.profileId,
+        candidate.id
+      );
+    } catch (error) {
+      const linked =
+        await getYouthByProfileId(
+          payload.profileId
+        );
+
+      if (linked) {
+        return linked;
+      }
+
+      throw error;
+    }
+  }
+
+  return getYouthById(candidate.id);
 }
 
 export async function updateYouthRecord({
@@ -385,4 +512,3 @@ export async function updateYouthRecord({
     detail: "Youth registry record updated",
   });
 }
-

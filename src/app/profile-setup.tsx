@@ -620,6 +620,7 @@ const styles = StyleSheet.create({
   },
 
   accountCard: {
+    elevation: 3,
     minHeight: 72,
     flexDirection: "row",
     alignItems: "center",
@@ -680,6 +681,7 @@ const styles = StyleSheet.create({
   },
 
   input: {
+    elevation: 2,
     height: 54,
     borderWidth: 1,
     borderColor: colors.border,
@@ -697,6 +699,7 @@ const styles = StyleSheet.create({
   },
 
   typeCard: {
+    elevation: 3,
     minHeight: 104,
     flexDirection: "row",
     alignItems: "center",
@@ -752,6 +755,8 @@ const styles = StyleSheet.create({
   },
 
   securityNote: {
+
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     padding: spacing.md,
@@ -779,6 +784,7 @@ const styles = StyleSheet.create({
   },
 
   formErrorBox: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     padding: spacing.md,

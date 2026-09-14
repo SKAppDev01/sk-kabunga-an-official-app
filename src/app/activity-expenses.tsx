@@ -1,3 +1,6 @@
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import {
   router,
@@ -51,6 +54,51 @@ function formatMoney(
   )}`;
 }
 
+function parseDate(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
+function toIsoDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function formatDate(value: string) {
+  const date = parseDate(value);
+
+  if (!date) {
+    return "Select date";
+  }
+
+  return date.toLocaleDateString("en-PH", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 export default function ActivityExpensesScreen() {
   const params =
     useLocalSearchParams<{
@@ -87,6 +135,8 @@ export default function ActivityExpensesScreen() {
 
   const [expenseDate, setExpenseDate] =
     useState("");
+  const [showExpenseDatePicker, setShowExpenseDatePicker] =
+    useState(false);
 
   const [notes, setNotes] =
     useState("");
@@ -187,6 +237,23 @@ export default function ActivityExpensesScreen() {
         total + record.amount,
       0
     );
+
+  function handleExpenseDateChange(
+    event: DateTimePickerEvent,
+    selectedDate?: Date
+  ) {
+    setShowExpenseDatePicker(false);
+
+    if (
+      event.type === "dismissed" ||
+      !selectedDate
+    ) {
+      return;
+    }
+
+    setExpenseDate(toIsoDate(selectedDate));
+    setError("");
+  }
 
   async function handleAdd() {
     if (!activityId) {
@@ -388,20 +455,40 @@ export default function ActivityExpensesScreen() {
               keyboardType="decimal-pad"
             />
 
-            <TextInput
+            <Pressable
               style={[
-                styles.input,
+                styles.dateButton,
                 styles.spacedInput,
               ]}
-              value={expenseDate}
-              onChangeText={
-                setExpenseDate
-              }
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor={
-                colors.textMuted
-              }
-            />
+              onPress={() => {
+                setCategoryOpen(false);
+                setShowExpenseDatePicker(true);
+              }}
+              disabled={isSaving}
+            >
+              <Ionicons
+                name="calendar-outline"
+                size={19}
+                color={colors.textMuted}
+              />
+
+              <Text
+                style={[
+                  styles.dateButtonText,
+                  !expenseDate &&
+                    styles.placeholderText,
+                ]}
+                numberOfLines={1}
+              >
+                {formatDate(expenseDate)}
+              </Text>
+
+              <Ionicons
+                name="chevron-down-outline"
+                size={18}
+                color={colors.textMuted}
+              />
+            </Pressable>
 
             <Pressable
               style={[
@@ -624,6 +711,19 @@ export default function ActivityExpensesScreen() {
             )}
           </ScrollView>
         )}
+
+        {showExpenseDatePicker && (
+          <DateTimePicker
+            value={
+              parseDate(expenseDate) ??
+              parseDate(activityDate) ??
+              new Date()
+            }
+            mode="date"
+            display="default"
+            onChange={handleExpenseDateChange}
+          />
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -632,7 +732,7 @@ export default function ActivityExpensesScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
   flex: {
     flex: 1,
@@ -696,6 +796,24 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 12,
+    fontSize: typography.fontSize.sm,
+    color: colors.text,
+  },
+  dateButton: {
+    elevation: 2,
+    minHeight: 50,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    backgroundColor: colors.white,
+  },
+  dateButtonText: {
+    flex: 1,
+    minWidth: 0,
+    marginHorizontal: spacing.sm,
     fontSize: typography.fontSize.sm,
     color: colors.text,
   },

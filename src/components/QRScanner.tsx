@@ -269,8 +269,6 @@ export default function QRScanner({
     <View style={styles.container}>
       <StatusBar
         style="light"
-        translucent
-        backgroundColor="transparent"
       />
 
       <Camera
@@ -670,6 +668,7 @@ const styles = StyleSheet.create({
   },
 
   errorBox: {
+    elevation: 3,
     position: "absolute",
     left: spacing.xl,
     right: spacing.xl,

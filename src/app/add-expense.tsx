@@ -1,4 +1,8 @@
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
 import {
   router,
   useFocusEffect,
@@ -8,6 +12,8 @@ import {
   useState,
 } from "react";
 import {
+  Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -26,7 +32,12 @@ import {
 } from "../services/budget-categories";
 import {
   createFinanceExpense,
+  updateFinanceExpenseReceipt,
 } from "../services/finance-expenses";
+import {
+  deleteReceiptPhoto,
+  saveReceiptPhoto,
+} from "../services/receipt-storage";
 import {
   getAllLocalProjects,
   LocalProject,
@@ -46,6 +57,11 @@ type ExpenseErrors = {
   expenseDate?: string;
   category?: string;
   form?: string;
+};
+
+type ReceiptDraft = {
+  uri: string;
+  fileName?: string | null;
 };
 
 function getTodayLocalDate() {
@@ -81,6 +97,43 @@ function isValidDateText(value: string) {
   );
 }
 
+function parseExpenseDate(value: string) {
+  if (!isValidDateText(value)) {
+    return null;
+  }
+
+  const [year, month, day] =
+    value.split("-").map(Number);
+
+  return new Date(year, month - 1, day);
+}
+
+function toIsoDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(
+    date.getMonth() + 1
+  ).padStart(2, "0");
+  const day = String(
+    date.getDate()
+  ).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function formatExpenseDate(value: string) {
+  const date = parseExpenseDate(value);
+
+  if (!date) {
+    return "Select date";
+  }
+
+  return date.toLocaleDateString("en-PH", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 export default function AddExpenseScreen() {
   const [title, setTitle] =
     useState("");
@@ -88,10 +141,16 @@ export default function AddExpenseScreen() {
     useState("");
   const [expenseDate, setExpenseDate] =
     useState(getTodayLocalDate());
+  const [
+    showExpenseDatePicker,
+    setShowExpenseDatePicker,
+  ] = useState(false);
   const [notes, setNotes] =
     useState("");
   const [isYouthVisible, setIsYouthVisible] =
     useState(false);
+  const [receiptDraft, setReceiptDraft] =
+    useState<ReceiptDraft | null>(null);
 
   const [categories, setCategories] =
     useState<BudgetCategory[]>([]);
@@ -198,6 +257,143 @@ export default function AddExpenseScreen() {
     }));
   }
 
+  function openExpenseDatePicker() {
+    setCategoryOpen(false);
+    setProjectOpen(false);
+    setShowExpenseDatePicker(true);
+  }
+
+  function handleExpenseDateChange(
+    event: DateTimePickerEvent,
+    selectedDate?: Date
+  ) {
+    setShowExpenseDatePicker(false);
+
+    if (
+      event.type === "dismissed" ||
+      !selectedDate
+    ) {
+      return;
+    }
+
+    setExpenseDate(toIsoDate(selectedDate));
+    clearError("expenseDate");
+  }
+
+  async function chooseReceiptPhoto() {
+    if (isSaving) {
+      return;
+    }
+
+    try {
+      const permission =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permission.granted) {
+        Alert.alert(
+          "Photo Permission Required",
+          "Allow photo access to choose a receipt image."
+        );
+        return;
+      }
+
+      const result =
+        await ImagePicker.launchImageLibraryAsync(
+          {
+            mediaTypes: ["images"],
+            allowsEditing: true,
+            quality: 0.85,
+          }
+        );
+
+      if (result.canceled) {
+        return;
+      }
+
+      const asset =
+        result.assets[0];
+
+      if (!asset?.uri) {
+        throw new Error(
+          "IMAGE_URI_MISSING"
+        );
+      }
+
+      setReceiptDraft({
+        uri: asset.uri,
+        fileName:
+          asset.fileName,
+      });
+    } catch (error) {
+      console.error(
+        "Choose receipt photo error:",
+        error
+      );
+
+      Alert.alert(
+        "Unable to Select Receipt",
+        "The receipt photo could not be selected. Please try another image."
+      );
+    }
+  }
+
+  async function takeReceiptPhoto() {
+    if (isSaving) {
+      return;
+    }
+
+    try {
+      const permission =
+        await ImagePicker.requestCameraPermissionsAsync();
+
+      if (!permission.granted) {
+        Alert.alert(
+          "Camera Permission Required",
+          "Allow camera access to photograph a receipt."
+        );
+        return;
+      }
+
+      const result =
+        await ImagePicker.launchCameraAsync(
+          {
+            mediaTypes: ["images"],
+            allowsEditing: true,
+            quality: 0.85,
+          }
+        );
+
+      if (result.canceled) {
+        return;
+      }
+
+      const asset =
+        result.assets[0];
+
+      if (!asset?.uri) {
+        throw new Error(
+          "IMAGE_URI_MISSING"
+        );
+      }
+
+      setReceiptDraft({
+        uri: asset.uri,
+        fileName:
+          asset.fileName,
+      });
+    } catch (error) {
+      console.error(
+        "Take receipt photo error:",
+        error
+      );
+
+      Alert.alert(
+        "Unable to Capture Receipt",
+        "The receipt photo could not be captured. Please try again."
+      );
+    }
+  }
+
   async function handleSave() {
     const cleanTitle = title.trim();
     const cleanAmount = amount.trim();
@@ -256,17 +452,58 @@ export default function AddExpenseScreen() {
         return;
       }
 
-      await createFinanceExpense({
-        title: cleanTitle,
-        amount: parsedAmount,
-        expenseDate: cleanDate,
-        categoryId: selectedCategoryId,
-        projectId:
-          selectedProjectId || null,
-        notes,
-        isYouthVisible,
-        createdBy: user.id,
-      });
+      const expenseId =
+        await createFinanceExpense({
+          title: cleanTitle,
+          amount: parsedAmount,
+          expenseDate: cleanDate,
+          categoryId: selectedCategoryId,
+          projectId:
+            selectedProjectId || null,
+          notes,
+          isYouthVisible,
+          createdBy: user.id,
+        });
+
+      if (receiptDraft) {
+        let savedReceiptUri:
+          | string
+          | null = null;
+
+        try {
+          savedReceiptUri =
+            await saveReceiptPhoto({
+              sourceUri:
+                receiptDraft.uri,
+              expenseId,
+              fileName:
+                receiptDraft.fileName,
+            });
+
+          await updateFinanceExpenseReceipt({
+            expenseId,
+            receiptUri:
+              savedReceiptUri,
+            updatedBy: user.id,
+          });
+        } catch (receiptError) {
+          console.error(
+            "Initial receipt attachment error:",
+            receiptError
+          );
+
+          if (savedReceiptUri) {
+            await deleteReceiptPhoto(
+              savedReceiptUri
+            );
+          }
+
+          Alert.alert(
+            "Expense Saved",
+            "The expense was saved, but the receipt photo could not be attached. You can attach it later from Expense Details."
+          );
+        }
+      }
 
       router.back();
     } catch (error) {
@@ -455,12 +692,14 @@ export default function AddExpenseScreen() {
               Expense Date
             </Text>
 
-            <View
+            <Pressable
               style={[
                 styles.dateContainer,
                 errors.expenseDate &&
                   styles.inputError,
               ]}
+              onPress={openExpenseDatePicker}
+              disabled={isSaving}
             >
               <Ionicons
                 name="calendar-outline"
@@ -468,27 +707,19 @@ export default function AddExpenseScreen() {
                 color={colors.textMuted}
               />
 
-              <TextInput
+              <Text
                 style={styles.dateInput}
-                value={expenseDate}
-                onChangeText={(text) => {
-                  setExpenseDate(text);
+                numberOfLines={1}
+              >
+                {formatExpenseDate(expenseDate)}
+              </Text>
 
-                  if (errors.expenseDate) {
-                    clearError(
-                      "expenseDate"
-                    );
-                  }
-                }}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor={
-                  colors.textMuted
-                }
-                keyboardType="numbers-and-punctuation"
-                maxLength={10}
-                editable={!isSaving}
+              <Ionicons
+                name="chevron-down-outline"
+                size={18}
+                color={colors.textSecondary}
               />
-            </View>
+            </Pressable>
 
             {errors.expenseDate && (
               <Text style={styles.errorText}>
@@ -775,19 +1006,164 @@ export default function AddExpenseScreen() {
             />
           </View>
 
-          <View style={styles.receiptNotice}>
-            <Ionicons
-              name="image-outline"
-              size={20}
-              color={colors.textMuted}
-            />
-
-            <Text
-              style={styles.receiptNoticeText}
-            >
-              Receipt photo attachment will be added
-              in its dedicated roadmap step.
+          <View style={styles.fieldGroup}>
+            <Text style={styles.label}>
+              Receipt Photo
             </Text>
+
+            <Text style={styles.fieldHint}>
+              Optional. Receipt photos stay private and are stored locally on this device.
+            </Text>
+
+            {receiptDraft ? (
+              <View
+                style={
+                  styles.receiptPreviewCard
+                }
+              >
+                <Image
+                  source={{
+                    uri: receiptDraft.uri,
+                  }}
+                  style={
+                    styles.receiptPreview
+                  }
+                  resizeMode="cover"
+                />
+
+                <View
+                  style={
+                    styles.receiptPreviewFooter
+                  }
+                >
+                  <View
+                    style={
+                      styles.receiptSelectedText
+                    }
+                  >
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={19}
+                      color={colors.success}
+                    />
+
+                    <Text
+                      style={
+                        styles.receiptSelectedLabel
+                      }
+                    >
+                      Receipt selected
+                    </Text>
+                  </View>
+
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.removeReceiptButton,
+                      pressed &&
+                        styles.buttonPressed,
+                    ]}
+                    onPress={() =>
+                      setReceiptDraft(
+                        null
+                      )
+                    }
+                    disabled={isSaving}
+                  >
+                    <Text
+                      style={
+                        styles.removeReceiptText
+                      }
+                    >
+                      Remove
+                    </Text>
+                  </Pressable>
+                </View>
+              </View>
+            ) : (
+              <View
+                style={
+                  styles.receiptEmpty
+                }
+              >
+                <Ionicons
+                  name="image-outline"
+                  size={28}
+                  color={colors.textMuted}
+                />
+
+                <Text
+                  style={
+                    styles.receiptEmptyText
+                  }
+                >
+                  No receipt photo selected
+                </Text>
+              </View>
+            )}
+
+            <View
+              style={
+                styles.receiptActions
+              }
+            >
+              <Pressable
+                style={({ pressed }) => [
+                  styles.receiptActionButton,
+                  pressed &&
+                    styles.buttonPressed,
+                ]}
+                onPress={
+                  takeReceiptPhoto
+                }
+                disabled={isSaving}
+              >
+                <Ionicons
+                  name="camera-outline"
+                  size={20}
+                  color={colors.primary}
+                />
+
+                <Text
+                  style={
+                    styles.receiptActionText
+                  }
+                >
+                  Take Photo
+                </Text>
+              </Pressable>
+
+              <View
+                style={
+                  styles.receiptActionSpacer
+                }
+              />
+
+              <Pressable
+                style={({ pressed }) => [
+                  styles.receiptActionButton,
+                  pressed &&
+                    styles.buttonPressed,
+                ]}
+                onPress={
+                  chooseReceiptPhoto
+                }
+                disabled={isSaving}
+              >
+                <Ionicons
+                  name="images-outline"
+                  size={20}
+                  color={colors.primary}
+                />
+
+                <Text
+                  style={
+                    styles.receiptActionText
+                  }
+                >
+                  Choose Photo
+                </Text>
+              </Pressable>
+            </View>
           </View>
 
           {errors.form && (
@@ -833,6 +1209,18 @@ export default function AddExpenseScreen() {
             </Text>
           </Pressable>
         </ScrollView>
+
+        {showExpenseDatePicker && (
+          <DateTimePicker
+            value={
+              parseExpenseDate(expenseDate) ??
+              new Date()
+            }
+            mode="date"
+            display="default"
+            onChange={handleExpenseDateChange}
+          />
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -845,7 +1233,7 @@ const styles = StyleSheet.create({
 
   safeArea: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: "#E3F2FD",
   },
 
   header: {
@@ -878,6 +1266,7 @@ const styles = StyleSheet.create({
   },
 
   scrollView: {
+    backgroundColor: "#E3F2FD",
     flex: 1,
   },
 
@@ -902,6 +1291,7 @@ const styles = StyleSheet.create({
   },
 
   warningCard: {
+    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginBottom: spacing.xl,
@@ -979,6 +1369,7 @@ const styles = StyleSheet.create({
   },
 
   input: {
+    elevation: 2,
     minHeight: 54,
     borderWidth: 1,
     borderColor: colors.border,
@@ -990,6 +1381,7 @@ const styles = StyleSheet.create({
   },
 
   amountContainer: {
+    elevation: 2,
     height: 54,
     flexDirection: "row",
     alignItems: "center",
@@ -1016,6 +1408,7 @@ const styles = StyleSheet.create({
   },
 
   dateContainer: {
+    elevation: 2,
     height: 54,
     flexDirection: "row",
     alignItems: "center",
@@ -1028,7 +1421,6 @@ const styles = StyleSheet.create({
 
   dateInput: {
     flex: 1,
-    height: "100%",
     marginLeft: spacing.sm,
     fontSize: typography.fontSize.md,
     color: colors.text,
@@ -1058,6 +1450,7 @@ const styles = StyleSheet.create({
   },
 
   dropdownMenu: {
+    elevation: 2,
     marginTop: spacing.sm,
     borderWidth: 1,
     borderColor: colors.border,
@@ -1108,21 +1501,116 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
   },
 
-  receiptNotice: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: spacing.lg,
+  receiptEmpty: {
+    elevation: 3,
+    minHeight: 108,
+    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
     padding: spacing.md,
+    backgroundColor: colors.surface,
+  },
+
+  receiptEmptyText: {
+    width: "100%",
+    minWidth: 0,
+    marginTop: spacing.sm,
+    fontSize: typography.fontSize.xs,
+    lineHeight: 18,
+    color: colors.textMuted,
+    textAlign: "center",
+  },
+
+  receiptPreviewCard: {
+    elevation: 3,
+    marginTop: spacing.sm,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.border,
     borderRadius: 14,
     backgroundColor: colors.surface,
   },
 
-  receiptNoticeText: {
+  receiptPreview: {
+    width: "100%",
+    height: 190,
+    backgroundColor: colors.border,
+  },
+
+  receiptPreviewFooter: {
+    minHeight: 52,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: spacing.md,
+  },
+
+  receiptSelectedText: {
     flex: 1,
-    marginLeft: spacing.sm,
+    minWidth: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    paddingRight: spacing.sm,
+  },
+
+  receiptSelectedLabel: {
+    flex: 1,
+    minWidth: 0,
+    marginLeft: spacing.xs,
     fontSize: typography.fontSize.xs,
     lineHeight: 18,
     color: colors.textSecondary,
+  },
+
+  removeReceiptButton: {
+    minWidth: 64,
+    minHeight: 36,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  removeReceiptText: {
+    fontSize: typography.fontSize.xs,
+    fontWeight:
+      typography.fontWeight.semibold,
+    color: colors.danger,
+  },
+
+  receiptActions: {
+    flexDirection: "row",
+    marginTop: spacing.sm,
+  },
+
+  receiptActionButton: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 48,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 12,
+    backgroundColor: colors.background,
+  },
+
+  receiptActionSpacer: {
+    width: spacing.sm,
+  },
+
+  receiptActionText: {
+    minWidth: 0,
+    marginLeft: spacing.xs,
+    fontSize: 11,
+    lineHeight: 16,
+    fontWeight:
+      typography.fontWeight.semibold,
+    color: colors.primary,
+    textAlign: "center",
+    flexShrink: 1,
   },
 
   inputError: {
