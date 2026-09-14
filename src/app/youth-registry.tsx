@@ -987,7 +987,7 @@ const styles = StyleSheet.create({
   },
 
   filterPopoverBackdrop: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 20,
   },
 
