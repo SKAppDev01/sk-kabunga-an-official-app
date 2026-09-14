@@ -3,6 +3,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { AppUpdateManager } from "../components/AppUpdateManager";
 import { initializeDatabase } from "../database/database";
 
 export default function RootLayout() {
@@ -25,6 +26,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
+      <AppUpdateManager />
 
       <Stack
         screenOptions={{

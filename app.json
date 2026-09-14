@@ -4,7 +4,7 @@
     "slug": "SKLocal",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/sk-kabunga-an-logo.png",
     "scheme": "sklocal",
     "userInterfaceStyle": "automatic",
     "ios": {
@@ -12,15 +12,16 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundColor": "#E3F2FD",
+        "foregroundImage": "./assets/images/sk-kabunga-an-logo.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.gzexperience.SKLocal",
       "permissions": [
-        "android.permission.CAMERA"
+        "android.permission.CAMERA",
+        "android.permission.REQUEST_INSTALL_PACKAGES"
       ]
     },
     "web": {
@@ -32,9 +33,14 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "backgroundColor": "#E3F2FD",
+          "image": "./assets/images/sk-kabunga-an-logo.png",
+          "imageWidth": 180,
+          "resizeMode": "contain",
+          "dark": {
+            "image": "./assets/images/sk-kabunga-an-logo.png",
+            "backgroundColor": "#E3F2FD"
+          }
         }
       ],
       "expo-sqlite",
@@ -62,6 +68,13 @@
         "projectId": "fdfd3ef2-6940-466c-8951-1fe571920f5c"
       }
     },
-    "owner": "gzexperience"
+    "owner": "gzexperience",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "checkAutomatically": "NEVER",
+      "url": "https://u.expo.dev/fdfd3ef2-6940-466c-8951-1fe571920f5c"
+    }
   }
 }

@@ -121,12 +121,6 @@ export default function SplashScreen() {
             />
           </View>
 
-          {/* Main app logo */}
-          <Image
-            source={require("../../assets/images/sk-kabunga-an-logo.png")}
-            style={styles.appLogo}
-            resizeMode="contain"
-          />
 
           <Text style={styles.title}>
             SK KABUNGA-AN
@@ -185,11 +179,6 @@ const styles = StyleSheet.create({
     height: 72,
   },
 
-  appLogo: {
-    width: 130,
-    height: 130,
-    marginBottom: spacing.md,
-  },
 
   title: {
     fontSize:

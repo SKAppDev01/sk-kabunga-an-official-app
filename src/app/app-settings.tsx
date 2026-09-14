@@ -1,16 +1,29 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import type { ComponentProps } from "react";
 import {
+  useEffect,
+  useState,
+  type ComponentProps,
+} from "react";
+import {
+  Alert,
   Image,
   Pressable,
   ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import {
+  getCurrentAppVersion,
+} from "../services/app-updater";
+import {
+  getAutomaticUpdateCheckEnabled,
+  setAutomaticUpdateCheckEnabled,
+} from "../services/update-preferences";
 import {
   colors,
   spacing,
@@ -21,6 +34,55 @@ type IconName =
   ComponentProps<typeof Ionicons>["name"];
 
 export default function AppSettingsScreen() {
+  const [autoCheckEnabled, setAutoCheckEnabled] =
+    useState(true);
+  const currentVersion = getCurrentAppVersion();
+
+  useEffect(() => {
+    let active = true;
+
+    void (async () => {
+      try {
+        const enabled =
+          await getAutomaticUpdateCheckEnabled();
+
+        if (active) {
+          setAutoCheckEnabled(enabled);
+        }
+      } catch (error) {
+        console.error(
+          "Unable to load update preference:",
+          error
+        );
+      }
+    })();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function handleAutoCheckChange(
+    enabled: boolean
+  ) {
+    const previous = autoCheckEnabled;
+    setAutoCheckEnabled(enabled);
+
+    try {
+      await setAutomaticUpdateCheckEnabled(enabled);
+    } catch (error) {
+      console.error(
+        "Unable to save update preference:",
+        error
+      );
+      setAutoCheckEnabled(previous);
+      Alert.alert(
+        "Update Settings",
+        "Unable to save the automatic update setting."
+      );
+    }
+  }
+
   return (
     <SafeAreaView
       style={styles.safeArea}
@@ -92,6 +154,39 @@ export default function AppSettingsScreen() {
             value="Light"
           />
         </View>
+
+        <Text
+          style={styles.sectionTitle}
+        >
+          App Updates
+        </Text>
+
+        <View style={styles.settingsList}>
+          <InfoRow
+            icon="information-circle-outline"
+            title="Current Version"
+            value={`v${currentVersion}`}
+          />
+
+          <View style={styles.divider} />
+
+          <ToggleRow
+            icon="cloud-download-outline"
+            title="Automatic Update Check"
+            description="Check GitHub Releases when the app starts"
+            value={autoCheckEnabled}
+            onValueChange={(enabled) =>
+              void handleAutoCheckChange(enabled)
+            }
+          />
+        </View>
+
+        <NavigationRow
+          icon="refresh-circle-outline"
+          title="Check for Updates"
+          description="Check GitHub Releases and EAS updates now"
+          onPress={() => router.push("/app-update")}
+        />
 
         <Text
           style={styles.sectionTitle}
@@ -309,6 +404,53 @@ function InfoRow({
   );
 }
 
+function ToggleRow({
+  icon,
+  title,
+  description,
+  value,
+  onValueChange,
+}: {
+  icon: IconName;
+  title: string;
+  description: string;
+  value: boolean;
+  onValueChange: (value: boolean) => void;
+}) {
+  return (
+    <View style={styles.infoRow}>
+      <View style={styles.iconBox}>
+        <Ionicons
+          name={icon}
+          size={21}
+          color={colors.primary}
+        />
+      </View>
+
+      <View style={styles.toggleTextWrap}>
+        <Text style={styles.navigationTitle}>
+          {title}
+        </Text>
+        <Text style={styles.rowDescription}>
+          {description}
+        </Text>
+      </View>
+
+      <Switch
+        value={value}
+        onValueChange={onValueChange}
+        trackColor={{
+          false: "#D1D5DB",
+          true: "#93C5FD",
+        }}
+        thumbColor={
+          value ? colors.primary : colors.white
+        }
+      />
+    </View>
+  );
+}
+
 function NavigationRow({
   icon,
   title,
@@ -456,6 +598,14 @@ const styles = StyleSheet.create({
       typography.fontWeight.semibold,
     color: colors.text,
     flexShrink: 1,
+  },
+
+  toggleTextWrap: {
+    flex: 1,
+    minWidth: 0,
+    marginLeft: spacing.sm,
+    marginRight: spacing.sm,
+    paddingVertical: spacing.sm,
   },
 
   navigationTitle: {
