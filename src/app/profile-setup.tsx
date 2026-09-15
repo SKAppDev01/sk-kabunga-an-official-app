@@ -630,8 +630,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 16,
     marginBottom: spacing.xl,
-    backgroundColor:
-      "rgba(255,255,255,0.94)",
+    backgroundColor: colors.white,
   },
 
   accountIcon: {
@@ -689,8 +688,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     fontSize: typography.fontSize.md,
     color: colors.text,
-    backgroundColor:
-      "rgba(255,255,255,0.95)",
+    backgroundColor: colors.white,
   },
 
   inputError: {
@@ -708,15 +706,13 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 16,
-    backgroundColor:
-      "rgba(255,255,255,0.95)",
+    backgroundColor: colors.white,
   },
 
   typeCardSelected: {
     borderColor: colors.primary,
     borderWidth: 1.5,
-    backgroundColor:
-      "rgba(37,99,235,0.05)",
+    backgroundColor: "#EFF6FF",
   },
 
   cardPressed: {
@@ -755,8 +751,7 @@ const styles = StyleSheet.create({
   },
 
   securityNote: {
-
-    elevation: 3,
+    elevation: 0,
     flexDirection: "row",
     alignItems: "flex-start",
     padding: spacing.md,
@@ -765,8 +760,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: 12,
-    backgroundColor:
-      "rgba(255,255,255,0.8)",
+    backgroundColor: colors.white,
   },
 
   securityNoteText: {
@@ -792,8 +786,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.danger,
     borderRadius: 12,
-    backgroundColor:
-      "rgba(220,38,38,0.05)",
+    backgroundColor: "#FEF2F2",
   },
 
   formErrorText: {

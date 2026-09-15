@@ -330,10 +330,6 @@ async function runDatabaseInitialization() {
         REFERENCES meetings(id)
         ON DELETE CASCADE,
 
-      FOREIGN KEY (youth_id)
-        REFERENCES youth(id)
-        ON DELETE SET NULL,
-
       FOREIGN KEY (created_by)
         REFERENCES users(id)
         ON DELETE SET NULL

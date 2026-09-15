@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
   },
 
   warningBox: {
-    elevation: 3,
+    elevation: 0,
     flexDirection: "row",
     alignItems: "flex-start",
     marginTop: spacing.xl,
@@ -594,8 +594,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.warning,
     borderRadius: 12,
-    backgroundColor:
-      "rgba(217,119,6,0.05)",
+    backgroundColor: "#FFFBEB",
   },
 
   warningText: {
