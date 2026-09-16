@@ -20,6 +20,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../components/AppHeader";
+
 import {
   getMeetingById,
   updateMeetingMinutes,
@@ -155,7 +157,13 @@ export default function MeetingMinutesScreen() {
   return (
     <SafeAreaView
       style={styles.safeArea}
+    
+      edges={["left", "right", "bottom"]}
     >
+      <AppHeader
+        title="Minutes"
+        showBack
+      />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={
@@ -164,31 +172,7 @@ export default function MeetingMinutesScreen() {
             : undefined
         }
       >
-        <View style={styles.header}>
-          <Pressable
-            style={styles.backButton}
-            onPress={() =>
-              router.back()
-            }
-            disabled={isSaving}
-          >
-            <Ionicons
-              name="arrow-back"
-              size={24}
-              color={colors.text}
-            />
-          </Pressable>
-
-          <Text
-            style={styles.headerTitle}
-          >
-            Minutes
-          </Text>
-
-          <View
-            style={styles.headerSpacer}
-          />
-        </View>
+        
 
         {isLoading ? (
           <View style={styles.centerState}>
@@ -207,6 +191,7 @@ export default function MeetingMinutesScreen() {
               false
             }
           >
+
             <Text
               style={styles.meetingTitle}
             >
@@ -280,29 +265,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    height: 60,
+    minHeight: 88,
     flexDirection: "row",
     alignItems: "center",
+    alignSelf: "stretch",
+    marginHorizontal: -spacing.xl,
+    marginBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingTop: 0,
+    paddingBottom: 0,
+    backgroundColor: colors.primary,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    elevation: 4,
+    zIndex: 20,
   },
   backButton: {
     width: 44,
     height: 44,
     alignItems: "flex-start",
     justifyContent: "center",
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: typography.fontSize.lg,
-    fontWeight:
-      typography.fontWeight.bold,
-    color: colors.text,
-  },
-  headerSpacer: {
-    width: 44,
   },
   centerState: {
     flex: 1,

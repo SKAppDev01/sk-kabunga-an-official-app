@@ -21,6 +21,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../components/AppHeader";
+
 import {
   ActivityParticipantRecord,
   addActivityParticipant,
@@ -194,7 +196,27 @@ export default function ActivityParticipantsScreen() {
   return (
     <SafeAreaView
       style={styles.safeArea}
+    
+      edges={["left", "right", "bottom"]}
     >
+      <AppHeader
+        title="Participants"
+        showBack
+        right={
+          <Pressable
+            style={styles.headerAction}
+            onPress={() => setShowAdd((current) => !current)}
+            accessibilityRole="button"
+            accessibilityLabel={showAdd ? "Close add participant form" : "Add participant"}
+          >
+            <Ionicons
+              name={showAdd ? "close" : "add"}
+              size={25}
+              color={colors.primary}
+            />
+          </Pressable>
+        }
+      />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={
@@ -203,45 +225,12 @@ export default function ActivityParticipantsScreen() {
             : undefined
         }
       >
-        <View style={styles.header}>
-          <Pressable
-            style={styles.backButton}
-            onPress={() =>
-              router.back()
-            }
-          >
-            <Ionicons
-              name="arrow-back"
-              size={24}
-              color={colors.text}
-            />
-          </Pressable>
-
-          <Text
-            style={styles.headerTitle}
-          >
-            Participants
-          </Text>
-
-          <Pressable
-            style={styles.headerAction}
-            onPress={() =>
-              setShowAdd(
-                (current) => !current
-              )
-            }
-          >
-            <Ionicons
-              name={
-                showAdd
-                  ? "close"
-                  : "add"
-              }
-              size={25}
-              color={colors.primary}
-            />
-          </Pressable>
-        </View>
+        <ScrollView
+          style={styles.flex}
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
 
         <View style={styles.summary}>
           <Text
@@ -358,15 +347,7 @@ export default function ActivityParticipantsScreen() {
             </Text>
           </View>
         ) : (
-          <ScrollView
-            style={styles.list}
-            contentContainerStyle={
-              styles.listContent
-            }
-            showsVerticalScrollIndicator={
-              false
-            }
-          >
+          <View style={[styles.list, styles.listContent, { flex: 0 }]}>
             {records.map(
               (record, index) => (
                 <View
@@ -438,8 +419,10 @@ export default function ActivityParticipantsScreen() {
                 </View>
               )
             )}
-          </ScrollView>
+          </View>
         )}
+      
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -454,12 +437,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    height: 60,
+    minHeight: 88,
     flexDirection: "row",
     alignItems: "center",
+    alignSelf: "stretch",
+    marginHorizontal: -spacing.xl,
+    marginBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingTop: 0,
+    paddingBottom: 0,
+    backgroundColor: colors.primary,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    elevation: 4,
+    zIndex: 20,
   },
   backButton: {
     width: 44,
@@ -467,19 +458,13 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "center",
   },
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: typography.fontSize.lg,
-    fontWeight:
-      typography.fontWeight.bold,
-    color: colors.text,
-  },
   headerAction: {
     width: 44,
     height: 44,
-    alignItems: "flex-end",
+    alignItems: "center",
     justifyContent: "center",
+    borderRadius: 22,
+    backgroundColor: colors.white,
   },
   summary: {
     flexDirection: "row",

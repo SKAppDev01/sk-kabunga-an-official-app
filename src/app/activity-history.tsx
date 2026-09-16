@@ -18,6 +18,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../components/AppHeader";
+
+
 import {
   AppActivity,
   AppActivityAction,
@@ -210,27 +213,13 @@ export default function ActivityHistoryScreen() {
   return (
     <SafeAreaView
       style={styles.safeArea}
+      edges={["left", "right", "bottom"]}
     >
-      <View style={styles.header}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={colors.text}
-          />
-        </Pressable>
-
-        <Text style={styles.headerTitle}>
-          Activity History
-        </Text>
-
-        <View style={styles.headerSpacer} />
-      </View>
-
-      <View style={styles.screen}>
+      <AppHeader
+        title="All Activity"
+        showBack
+      />
+<View style={styles.screen}>
         <Text style={styles.introText}>
           Review recorded actions without crowding
           the Home dashboard.
@@ -420,39 +409,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
 
-  header: {
-    height: 60,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-
-  backButton: {
-    width: 44,
-    height: 44,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: typography.fontSize.lg,
-    fontWeight:
-      typography.fontWeight.bold,
-    color: colors.text,
-  },
-
-  headerSpacer: {
-    width: 44,
-  },
-
   screen: {
     flex: 1,
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
+    paddingTop: spacing.xl,
   },
 
   introText: {

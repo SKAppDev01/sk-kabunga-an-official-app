@@ -16,7 +16,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../../components/AppHeader";
+
 import { CivicBackground } from "../../components/CivicBackground";
+
 
 import {
   FinanceSummary,
@@ -148,9 +151,12 @@ export default function FinanceScreen() {
 
       <SafeAreaView
         style={styles.safeArea}
-        edges={["top"]}
+      edges={["left", "right", "bottom"]}
       >
-      <ScrollView
+        <AppHeader
+          title="Finance"
+        />
+<ScrollView
         style={styles.scrollView}
         contentContainerStyle={
           styles.content
@@ -159,32 +165,7 @@ export default function FinanceScreen() {
           false
         }
       >
-        <Text style={styles.title}>
-          Finance
-        </Text>
-
-        <View style={styles.flagAccent}>
-          <View
-            style={[
-              styles.flagAccentSection,
-              styles.flagAccentBlue,
-            ]}
-          />
-
-          <View
-            style={[
-              styles.flagAccentSection,
-              styles.flagAccentGold,
-            ]}
-          />
-
-          <View
-            style={[
-              styles.flagAccentSection,
-              styles.flagAccentRed,
-            ]}
-          />
-        </View>
+        
 
         <Text style={styles.subtitle}>
           {youthMember
@@ -600,12 +581,9 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    paddingHorizontal:
-      spacing.xl,
-    paddingTop: spacing.lg,
-    paddingBottom:
-      spacing.xxxl +
-      spacing.xl,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
+    paddingBottom: 112,
   },
 
   title: {

@@ -1,10 +1,24 @@
+import { NavigationBar } from "expo-navigation-bar";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
+import { AppState, Platform } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { AppUpdateManager } from "../components/AppUpdateManager";
 import { initializeDatabase } from "../database/database";
+
+async function enableImmersiveMode() {
+  if (Platform.OS !== "android") {
+    return;
+  }
+
+  try {
+    NavigationBar.setHidden(true);
+  } catch (error) {
+    console.warn("Unable to enable immersive system bars:", error);
+  }
+}
 
 export default function RootLayout() {
   useEffect(() => {
@@ -23,9 +37,21 @@ export default function RootLayout() {
     setupDatabase();
   }, []);
 
+  useEffect(() => {
+    void enableImmersiveMode();
+
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        void enableImmersiveMode();
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
+
   return (
     <SafeAreaProvider>
-      <StatusBar style="dark" />
+      <StatusBar hidden animated style="light" />
       <AppUpdateManager />
 
       <Stack

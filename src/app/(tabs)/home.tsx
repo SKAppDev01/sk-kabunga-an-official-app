@@ -11,7 +11,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../../components/AppHeader";
+
 import { CivicBackground } from "../../components/CivicBackground";
+
 
 import {
   getCurrentSessionUser,
@@ -525,13 +528,19 @@ export default function HomeScreen() {
 
       <SafeAreaView
         style={styles.safeArea}
-        edges={["top"]}
+      edges={["left", "right", "bottom"]}
       >
-        <ScrollView
+        <AppHeader
+          title="Home"
+        />
+<ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        
+
+
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Text style={styles.appName}>
@@ -1156,8 +1165,8 @@ const styles = StyleSheet.create({
 
   content: {
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.xxl,
+    paddingTop: spacing.xl,
+    paddingBottom: 112,
   },
 
   header: {

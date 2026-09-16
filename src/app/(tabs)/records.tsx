@@ -2,13 +2,17 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import {
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../../components/AppHeader";
+
 import { CivicBackground } from "../../components/CivicBackground";
+
 
 import {
   colors,
@@ -23,35 +27,17 @@ export default function RecordsScreen() {
 
       <SafeAreaView
         style={styles.safeArea}
-        edges={["top"]}
+      edges={["left", "right", "bottom"]}
       >
-      <View style={styles.container}>
-        <Text style={styles.title}>
-          Records
-        </Text>
-
-        <View style={styles.flagAccent}>
-          <View
-            style={[
-              styles.flagAccentSection,
-              styles.flagAccentBlue,
-            ]}
-          />
-
-          <View
-            style={[
-              styles.flagAccentSection,
-              styles.flagAccentGold,
-            ]}
-          />
-
-          <View
-            style={[
-              styles.flagAccentSection,
-              styles.flagAccentRed,
-            ]}
-          />
-        </View>
+        <AppHeader
+          title="Records"
+        />
+<ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
+        
 
         <Text style={styles.subtitle}>
           Manage official SK records stored locally
@@ -314,7 +300,7 @@ export default function RecordsScreen() {
             will be added in the next roadmap phases.
           </Text>
         </View>
-      </View>
+      </ScrollView>
       </SafeAreaView>
     </View>
   );
@@ -331,10 +317,15 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
 
-  container: {
+  scrollView: {
     flex: 1,
+  },
+
+  container: {
+    flexGrow: 1,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.xl,
+    paddingBottom: 112,
   },
 
   title: {

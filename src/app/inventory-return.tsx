@@ -20,6 +20,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../components/AppHeader";
+
 import {
   ActiveBorrowRecord,
   getActiveInventoryBorrows,
@@ -221,7 +223,13 @@ export default function InventoryReturnScreen() {
   return (
     <SafeAreaView
       style={styles.safeArea}
+    
+      edges={["left", "right", "bottom"]}
     >
+      <AppHeader
+        title="Return Item"
+        showBack
+      />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={
@@ -230,30 +238,7 @@ export default function InventoryReturnScreen() {
             : undefined
         }
       >
-        <View style={styles.header}>
-          <Pressable
-            style={styles.backButton}
-            onPress={() =>
-              router.back()
-            }
-          >
-            <Ionicons
-              name="arrow-back"
-              size={24}
-              color={colors.text}
-            />
-          </Pressable>
-
-          <Text
-            style={styles.headerTitle}
-          >
-            Return Item
-          </Text>
-
-          <View
-            style={styles.headerSpacer}
-          />
-        </View>
+        
 
         {isLoading ? (
           <View style={styles.centerState}>
@@ -290,6 +275,7 @@ export default function InventoryReturnScreen() {
             }
             keyboardShouldPersistTaps="handled"
           >
+
             <Text
               style={styles.itemName}
             >
@@ -443,29 +429,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    height: 60,
+    minHeight: 88,
     flexDirection: "row",
     alignItems: "center",
+    alignSelf: "stretch",
+    marginHorizontal: -spacing.xl,
+    marginBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingTop: 0,
+    paddingBottom: 0,
+    backgroundColor: colors.primary,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    elevation: 4,
+    zIndex: 20,
   },
   backButton: {
     width: 44,
     height: 44,
     alignItems: "flex-start",
     justifyContent: "center",
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: typography.fontSize.lg,
-    fontWeight:
-      typography.fontWeight.bold,
-    color: colors.text,
-  },
-  headerSpacer: {
-    width: 44,
   },
   centerState: {
     flex: 1,

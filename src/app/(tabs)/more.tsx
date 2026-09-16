@@ -16,7 +16,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../../components/AppHeader";
+
 import { CivicBackground } from "../../components/CivicBackground";
+
 
 import {
   getCurrentSessionUser,
@@ -66,9 +69,12 @@ export default function MoreScreen() {
 
       <SafeAreaView
         style={styles.safeArea}
-        edges={["top"]}
+      edges={["left", "right", "bottom"]}
       >
-      <ScrollView
+        <AppHeader
+          title="More"
+        />
+<ScrollView
         style={styles.scrollView}
         contentContainerStyle={
           styles.container
@@ -77,32 +83,7 @@ export default function MoreScreen() {
           false
         }
       >
-        <Text style={styles.title}>
-          More
-        </Text>
-
-        <View style={styles.flagAccent}>
-          <View
-            style={[
-              styles.flagAccentSection,
-              styles.flagAccentBlue,
-            ]}
-          />
-
-          <View
-            style={[
-              styles.flagAccentSection,
-              styles.flagAccentGold,
-            ]}
-          />
-
-          <View
-            style={[
-              styles.flagAccentSection,
-              styles.flagAccentRed,
-            ]}
-          />
-        </View>
+        
 
         <Text style={styles.subtitle}>
           Account and application settings
@@ -277,10 +258,9 @@ const styles = StyleSheet.create({
 
   container: {
     flexGrow: 1,
-    paddingHorizontal:
-      spacing.xl,
-    paddingTop: spacing.lg,
-    paddingBottom: spacing.md,
+    paddingHorizontal: spacing.xl,
+    paddingTop: spacing.xl,
+    paddingBottom: 112,
   },
 
   title: {

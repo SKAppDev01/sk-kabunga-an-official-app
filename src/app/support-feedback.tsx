@@ -12,6 +12,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../components/AppHeader";
+
 import {
   colors,
   spacing,
@@ -81,31 +83,21 @@ export default function SupportFeedbackScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={colors.text}
-          />
-        </Pressable>
-
-        <Text style={styles.headerTitle}>
-          Support & Feedback
-        </Text>
-
-        <View style={styles.headerSpacer} />
-      </View>
+    <SafeAreaView style={styles.safeArea}
+      edges={["left", "right", "bottom"]}
+    >
+      <AppHeader
+        title="Support & Feedback"
+        showBack
+      />
+      
 
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+
         <View style={styles.heroCard}>
           <View style={styles.heroIcon}>
             <Ionicons
@@ -260,12 +252,20 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    height: 60,
+    minHeight: 88,
     flexDirection: "row",
     alignItems: "center",
+    alignSelf: "stretch",
+    marginHorizontal: -spacing.xl,
+    marginBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingTop: 0,
+    paddingBottom: 0,
+    backgroundColor: colors.primary,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    elevation: 4,
+    zIndex: 20,
   },
 
   backButton: {
@@ -275,19 +275,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  headerTitle: {
-    flex: 1,
-    minWidth: 0,
-    fontSize: typography.fontSize.lg,
-    lineHeight: 24,
-    fontWeight: typography.fontWeight.bold,
-    color: colors.text,
-    textAlign: "center",
-  },
 
-  headerSpacer: {
-    width: 44,
-  },
 
   scrollView: {
     flex: 1,

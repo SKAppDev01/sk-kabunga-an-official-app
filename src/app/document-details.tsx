@@ -19,6 +19,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../components/AppHeader";
+
 import {
   deleteDocument,
   DocumentRecord,
@@ -228,47 +230,30 @@ export default function DocumentDetailsScreen() {
   return (
     <SafeAreaView
       style={styles.safeArea}
+    
+      edges={["left", "right", "bottom"]}
     >
-      <View style={styles.header}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() =>
-            router.back()
-          }
-        >
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={colors.text}
-          />
-        </Pressable>
-
-        <Text
-          style={styles.headerTitle}
-        >
-          Document Details
-        </Text>
-
-        <Pressable
-          style={styles.headerAction}
-          onPress={() =>
-            router.push({
-              pathname:
-                "/edit-document",
-              params: {
-                id: documentId,
-              },
-            })
-          }
-          disabled={!documentId}
-        >
-          <Ionicons
-            name="create-outline"
-            size={23}
-            color={colors.primary}
-          />
-        </Pressable>
-      </View>
+      <AppHeader
+        title="Document Details"
+        showBack
+        right={
+          <Pressable
+            style={styles.headerAction}
+            onPress={() =>
+              router.push({
+                pathname: "/edit-document",
+                params: { id: documentId },
+              })
+            }
+            disabled={!documentId}
+            accessibilityRole="button"
+            accessibilityLabel="Edit document"
+          >
+            <Ionicons name="create-outline" size={23} color={colors.primary} />
+          </Pressable>
+        }
+      />
+      
 
       {isLoading ? (
         <View style={styles.centerState}>
@@ -307,6 +292,7 @@ export default function DocumentDetailsScreen() {
             false
           }
         >
+
           <View
             style={styles.titleSection}
           >
@@ -533,14 +519,20 @@ const styles = StyleSheet.create({
     backgroundColor: "#E3F2FD",
   },
   header: {
-    height: 60,
+    minHeight: 88,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal:
-      spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor:
-      colors.border,
+    alignSelf: "stretch",
+    marginHorizontal: -spacing.xl,
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    paddingTop: 0,
+    paddingBottom: 0,
+    backgroundColor: colors.primary,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    elevation: 4,
+    zIndex: 20,
   },
   backButton: {
     width: 44,
@@ -548,20 +540,13 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "center",
   },
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize:
-      typography.fontSize.lg,
-    fontWeight:
-      typography.fontWeight.bold,
-    color: colors.text,
-  },
   headerAction: {
     width: 44,
     height: 44,
-    alignItems: "flex-end",
+    alignItems: "center",
     justifyContent: "center",
+    borderRadius: 22,
+    backgroundColor: colors.white,
   },
   centerState: {
     flex: 1,

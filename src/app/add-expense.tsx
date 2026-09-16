@@ -26,6 +26,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../components/AppHeader";
+
 import {
   BudgetCategory,
   getBudgetCategories,
@@ -524,7 +526,13 @@ export default function AddExpenseScreen() {
   return (
     <SafeAreaView
       style={styles.safeArea}
+    
+      edges={["left", "right", "bottom"]}
     >
+      <AppHeader
+        title="Add Expense"
+        showBack
+      />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={
@@ -533,25 +541,7 @@ export default function AddExpenseScreen() {
             : undefined
         }
       >
-        <View style={styles.header}>
-          <Pressable
-            style={styles.backButton}
-            onPress={() => router.back()}
-            disabled={isSaving}
-          >
-            <Ionicons
-              name="arrow-back"
-              size={24}
-              color={colors.text}
-            />
-          </Pressable>
-
-          <Text style={styles.headerTitle}>
-            Add Expense
-          </Text>
-
-          <View style={styles.headerSpacer} />
-        </View>
+        
 
         <ScrollView
           style={styles.scrollView}
@@ -563,6 +553,7 @@ export default function AddExpenseScreen() {
             false
           }
         >
+
           <Text style={styles.introTitle}>
             Record an SK Expense
           </Text>
@@ -1237,12 +1228,20 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    height: 60,
+    minHeight: 88,
     flexDirection: "row",
     alignItems: "center",
+    alignSelf: "stretch",
+    marginHorizontal: -spacing.xl,
+    marginBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingTop: 0,
+    paddingBottom: 0,
+    backgroundColor: colors.primary,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    elevation: 4,
+    zIndex: 20,
   },
 
   backButton: {
@@ -1252,18 +1251,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: typography.fontSize.lg,
-    fontWeight:
-      typography.fontWeight.bold,
-    color: colors.text,
-  },
 
-  headerSpacer: {
-    width: 44,
-  },
 
   scrollView: {
     backgroundColor: "#E3F2FD",
@@ -1291,14 +1279,14 @@ const styles = StyleSheet.create({
   },
 
   warningCard: {
-    elevation: 3,
     flexDirection: "row",
     alignItems: "flex-start",
     marginBottom: spacing.xl,
     padding: spacing.lg,
+    borderWidth: 1,
+    borderColor: "#F4C86A",
     borderRadius: 16,
-    backgroundColor:
-      "rgba(217,119,6,0.08)",
+    backgroundColor: "#FFF7E6",
   },
 
   warningText: {

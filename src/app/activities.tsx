@@ -16,6 +16,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../components/AppHeader";
+
 import {
   ActivityRecord,
   ActivityStatus,
@@ -266,43 +268,31 @@ export default function ActivitiesScreen() {
   return (
     <SafeAreaView
       style={styles.safeArea}
+    
+      edges={["left", "right", "bottom"]}
     >
-      <View style={styles.header}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() =>
-            router.back()
-          }
-        >
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={colors.text}
-          />
-        </Pressable>
-
-        <Text style={styles.headerTitle}>
-          Activities
-        </Text>
-
-        <View
-          style={styles.headerCountWrap}
-        >
-          {!isLoading ? (
-            <View
-              style={styles.headerCountBadge}
-            >
-              <Text
-                style={styles.headerCountText}
-              >
-                {activities.length}
-              </Text>
+      <AppHeader
+        title="Activities"
+        showBack
+        right={
+          !isLoading ? (
+            <View style={styles.headerCountBadge}>
+              <Text style={styles.headerCountText}>{activities.length}</Text>
             </View>
-          ) : null}
-        </View>
-      </View>
+          ) : null
+        }
+      />
+      
 
       <View style={styles.screen}>
+        <ScrollView
+          style={styles.list}
+          contentContainerStyle={[
+            styles.listContent,
+            { flexGrow: 1 },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
         {isLoading ? (
           <View style={styles.centerState}>
             <Text style={styles.stateText}>
@@ -329,22 +319,18 @@ export default function ActivitiesScreen() {
             </Text>
           </View>
         ) : (
-          <ScrollView
-            style={styles.list}
-            contentContainerStyle={
-              styles.listContent
-            }
-            showsVerticalScrollIndicator={
-              false
-            }
-          >
+          <>
             {activities.map(
               renderActivity
             )}
-          </ScrollView>
+          </>
         )}
 
-        <Pressable
+        
+      
+        </ScrollView>
+
+<Pressable
           style={({ pressed }) => [
             styles.floatingAddButton,
             pressed &&
@@ -375,14 +361,20 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    height: 60,
+    minHeight: 88,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal:
-      spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor:
-      colors.border,
+    alignSelf: "stretch",
+    marginHorizontal: -spacing.xl,
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    paddingTop: 0,
+    paddingBottom: 0,
+    backgroundColor: colors.primary,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    elevation: 4,
+    zIndex: 20,
   },
 
   backButton: {
@@ -392,15 +384,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize:
-      typography.fontSize.lg,
-    fontWeight:
-      typography.fontWeight.bold,
-    color: colors.text,
-  },
 
   headerCountWrap: {
     width: 78,
@@ -409,15 +392,13 @@ const styles = StyleSheet.create({
   },
 
   headerCountBadge: {
-    minWidth: 28,
-    height: 28,
+    minWidth: 30,
+    minHeight: 30,
     alignItems: "center",
     justifyContent: "center",
-    paddingHorizontal:
-      spacing.sm,
+    paddingHorizontal: spacing.sm,
     borderRadius: 999,
-    backgroundColor:
-      "#EFF6FF",
+    backgroundColor: colors.white,
   },
 
   headerCountText: {
@@ -432,7 +413,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal:
       spacing.xl,
-    paddingTop: spacing.md,
+    paddingTop: 0,
   },
 
   centerState: {

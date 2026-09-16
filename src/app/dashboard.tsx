@@ -14,6 +14,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../components/AppHeader";
+
 import {
     deleteLocalAccount,
     getAllLocalAccounts,
@@ -167,35 +169,16 @@ export default function DashboardScreen() {
   return (
     <SafeAreaView
       style={styles.safeArea}
+    
+      edges={["left", "right", "bottom"]}
     >
+      <AppHeader
+        title="Dashboard"
+        showBack
+      />
       <View style={styles.container}>
         {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerText}>
-            <Text style={styles.title}>
-              SK Kabunga-an
-            </Text>
-
-            <Text style={styles.subtitle}>
-              Temporary Developer Dashboard
-            </Text>
-          </View>
-
-          <Pressable
-            style={({ pressed }) => [
-              styles.signOutButton,
-              pressed &&
-                styles.buttonPressed,
-            ]}
-            onPress={handleSignOut}
-          >
-            <Ionicons
-              name="log-out-outline"
-              size={22}
-              color={colors.primary}
-            />
-          </Pressable>
-        </View>
+        
 
         {/* Signed-in Account */}
         {currentUser && (
@@ -296,6 +279,7 @@ export default function DashboardScreen() {
             false
           }
         >
+
           {isLoading ? (
             <Text style={styles.emptyText}>
               Loading accounts...
@@ -471,6 +455,7 @@ const styles = StyleSheet.create({
   },
 
   header: {
+    minHeight: 52,
     flexDirection: "row",
     justifyContent:
       "space-between",

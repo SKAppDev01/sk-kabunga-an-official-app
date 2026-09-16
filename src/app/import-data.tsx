@@ -13,6 +13,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../components/AppHeader";
+
 import {
   DataImportPreview,
   DataPackage,
@@ -228,31 +230,14 @@ export default function ImportDataScreen() {
   return (
     <SafeAreaView
       style={styles.safeArea}
+    
+      edges={["left", "right", "bottom"]}
     >
-      <View style={styles.header}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() =>
-            router.back()
-          }
-        >
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={colors.text}
-          />
-        </Pressable>
-
-        <Text
-          style={styles.headerTitle}
-        >
-          Import Data
-        </Text>
-
-        <View
-          style={styles.headerSpacer}
-        />
-      </View>
+      <AppHeader
+        title="Import Data"
+        showBack
+      />
+      
 
       <ScrollView
         style={styles.scroll}
@@ -263,6 +248,7 @@ export default function ImportDataScreen() {
           false
         }
       >
+
         <Text style={styles.title}>
           Preview Before Merge
         </Text>
@@ -615,32 +601,26 @@ const styles = StyleSheet.create({
     backgroundColor: "#E3F2FD",
   },
   header: {
-    height: 60,
+    minHeight: 88,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal:
-      spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor:
-      colors.border,
+    alignSelf: "stretch",
+    marginHorizontal: -spacing.xl,
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    paddingTop: 0,
+    paddingBottom: 0,
+    backgroundColor: colors.primary,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    elevation: 4,
+    zIndex: 20,
   },
   backButton: {
     width: 44,
     height: 44,
     alignItems: "flex-start",
     justifyContent: "center",
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize:
-      typography.fontSize.lg,
-    fontWeight:
-      typography.fontWeight.bold,
-    color: colors.text,
-  },
-  headerSpacer: {
-    width: 44,
   },
   scroll: {
     flex: 1,

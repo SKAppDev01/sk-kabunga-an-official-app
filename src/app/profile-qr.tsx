@@ -14,6 +14,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../components/AppHeader";
+
 import { CivicBackground } from "../components/CivicBackground";
 import { ProfileQRCode } from "../components/ProfileQRCode";
 import {
@@ -120,33 +122,20 @@ export default function ProfileQrScreen() {
 
       <SafeAreaView
         style={styles.safeArea}
-        edges={["top", "bottom"]}
+      edges={["left", "right", "bottom"]}
       >
-        <View style={styles.header}>
-          <Pressable
-            style={styles.backButton}
-            onPress={() => router.back()}
-            hitSlop={8}
-          >
-            <Ionicons
-              name="chevron-back"
-              size={25}
-              color={colors.text}
-            />
-          </Pressable>
-
-          <Text style={styles.headerTitle}>
-            My QR Code
-          </Text>
-
-          <View style={styles.headerSpacer} />
-        </View>
+        <AppHeader
+          title="My QR Code"
+          showBack
+        />
+        
 
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
+
           {!loading && !ready ? (
             <View style={styles.incompleteCard}>
               <View style={styles.incompleteIcon}>
@@ -285,10 +274,20 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    height: 58,
+    minHeight: 88,
     flexDirection: "row",
     alignItems: "center",
+    alignSelf: "stretch",
+    marginHorizontal: -spacing.xl,
+    marginBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
+    paddingTop: 0,
+    paddingBottom: 0,
+    backgroundColor: colors.primary,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    elevation: 4,
+    zIndex: 20,
   },
 
   backButton: {
@@ -300,17 +299,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.88)",
   },
 
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: typography.fontSize.lg,
-    fontWeight: typography.fontWeight.bold,
-    color: colors.text,
-  },
 
-  headerSpacer: {
-    width: 40,
-  },
 
   scrollView: {
     flex: 1,

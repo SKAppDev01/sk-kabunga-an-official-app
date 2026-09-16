@@ -12,12 +12,15 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+import { AppHeader } from "../components/AppHeader";
 
 import {
   getInventoryItemById,
@@ -192,7 +195,13 @@ export default function InventoryQuantityScreen() {
   return (
     <SafeAreaView
       style={styles.safeArea}
+    
+      edges={["left", "right", "bottom"]}
     >
+      <AppHeader
+        title="Quantity"
+        showBack
+      />
       <KeyboardAvoidingView
         style={styles.flex}
         behavior={
@@ -201,32 +210,12 @@ export default function InventoryQuantityScreen() {
             : undefined
         }
       >
-        <View style={styles.header}>
-          <Pressable
-            style={styles.backButton}
-            onPress={() =>
-              router.back()
-            }
-          >
-            <Ionicons
-              name="arrow-back"
-              size={24}
-              color={colors.text}
-            />
-          </Pressable>
-
-          <Text
-            style={styles.headerTitle}
-          >
-            Quantity
-          </Text>
-
-          <View
-            style={styles.headerSpacer}
-          />
-        </View>
-
-        <View style={styles.content}>
+        <ScrollView
+          style={styles.flex}
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           {isLoading ? (
             <Text
               style={styles.stateText}
@@ -383,7 +372,8 @@ export default function InventoryQuantityScreen() {
                 "Item not found."}
             </Text>
           )}
-        </View>
+        
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -398,12 +388,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    height: 60,
+    minHeight: 88,
     flexDirection: "row",
     alignItems: "center",
+    alignSelf: "stretch",
+    marginHorizontal: -spacing.xl,
+    marginBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingTop: 0,
+    paddingBottom: 0,
+    backgroundColor: colors.primary,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    elevation: 4,
+    zIndex: 20,
   },
   backButton: {
     width: 44,
@@ -411,19 +409,8 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     justifyContent: "center",
   },
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: typography.fontSize.lg,
-    fontWeight:
-      typography.fontWeight.bold,
-    color: colors.text,
-  },
-  headerSpacer: {
-    width: 44,
-  },
   content: {
-    flex: 1,
+    flexGrow: 1,
     padding: spacing.xl,
   },
   itemName: {

@@ -18,6 +18,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../components/AppHeader";
+
 import {
   BudgetAllocation,
   deleteBudgetAllocation,
@@ -167,27 +169,24 @@ export default function BudgetAllocationsScreen() {
     !isLoading && !isYouthMember;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={colors.text}
-          />
-        </Pressable>
-
-        <Text style={styles.headerTitle}>
-          Budget Allocations
-        </Text>
-
-        <View style={styles.headerSpacer} />
-      </View>
+    <SafeAreaView style={styles.safeArea}
+      edges={["left", "right", "bottom"]}
+    >
+      <AppHeader
+        title="Budget Allocations"
+        showBack
+      />
+      
 
       <View style={styles.screen}>
+        <ScrollView
+          style={styles.list}
+          contentContainerStyle={[
+            styles.listContent,
+            { flexGrow: 1 },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
         {isLoading ? (
           <View style={styles.centerState}>
             <Text style={styles.stateText}>
@@ -215,15 +214,7 @@ export default function BudgetAllocationsScreen() {
             </Text>
           </View>
         ) : (
-          <ScrollView
-            style={styles.list}
-            contentContainerStyle={
-              styles.listContent
-            }
-            showsVerticalScrollIndicator={
-              false
-            }
-          >
+          <>
             <Text style={styles.countText}>
               {allocations.length}{" "}
               {allocations.length === 1
@@ -370,11 +361,13 @@ export default function BudgetAllocationsScreen() {
                 ) : null}
               </View>
             ))}
-          </ScrollView>
+          </>
         )}
 
+        </ScrollView>
+
         {canManage && (
-        <Pressable
+<Pressable
           style={({ pressed }) => [
             styles.floatingAddButton,
             pressed &&
@@ -405,12 +398,20 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    height: 60,
+    minHeight: 88,
     flexDirection: "row",
     alignItems: "center",
+    alignSelf: "stretch",
+    marginHorizontal: -spacing.xl,
+    marginBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingTop: 0,
+    paddingBottom: 0,
+    backgroundColor: colors.primary,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    elevation: 4,
+    zIndex: 20,
   },
 
   backButton: {
@@ -420,24 +421,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: typography.fontSize.lg,
-    fontWeight:
-      typography.fontWeight.bold,
-    color: colors.text,
-  },
 
-  headerSpacer: {
-    width: 44,
-  },
 
   screen: {
     backgroundColor: "#E3F2FD",
     flex: 1,
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
+    paddingTop: 0,
   },
 
   centerState: {

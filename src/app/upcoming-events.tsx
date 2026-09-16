@@ -16,6 +16,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../components/AppHeader";
+
+
 import {
   ActivityRecord,
   getActivitiesList,
@@ -312,27 +315,15 @@ export default function UpcomingEventsScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={colors.text}
-          />
-        </Pressable>
-
-        <Text style={styles.headerTitle}>
-          Upcoming Events
-        </Text>
-
-        <View style={styles.headerSpacer} />
-      </View>
-
-      <ScrollView
+    <SafeAreaView
+      style={styles.safeArea}
+      edges={["left", "right", "bottom"]}
+    >
+      <AppHeader
+        title="Upcoming Events"
+        showBack
+      />
+<ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -486,43 +477,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
 
-  header: {
-    height: 60,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-
-  backButton: {
-    width: 44,
-    height: 44,
-    alignItems: "flex-start",
-    justifyContent: "center",
-  },
-
-  headerTitle: {
-    flex: 1,
-    minWidth: 0,
-    textAlign: "center",
-    fontSize: typography.fontSize.lg,
-    lineHeight: 24,
-    fontWeight: typography.fontWeight.bold,
-    color: colors.text,
-  },
-
-  headerSpacer: {
-    width: 44,
-  },
-
   scrollView: {
     flex: 1,
   },
 
   content: {
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.md,
+    paddingTop: spacing.xl,
     paddingBottom: spacing.xxl,
   },
 

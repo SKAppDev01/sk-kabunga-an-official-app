@@ -16,7 +16,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../../components/AppHeader";
+
 import { CivicBackground } from "../../components/CivicBackground";
+
 
 import {
   getAllArchivedProjects,
@@ -118,45 +121,20 @@ export default function ProjectsScreen() {
 
       <SafeAreaView
         style={styles.safeArea}
-        edges={["top"]}
+      edges={["left", "right", "bottom"]}
       >
-      <View style={styles.screen}>
-        <View style={styles.header}>
-          <View style={styles.headerText}>
-            <Text style={styles.title}>
-              Projects
-            </Text>
-
-            <View style={styles.flagAccent}>
-              <View
-                style={[
-                  styles.flagAccentSection,
-                  styles.flagAccentBlue,
-                ]}
-              />
-
-              <View
-                style={[
-                  styles.flagAccentSection,
-                  styles.flagAccentGold,
-                ]}
-              />
-
-              <View
-                style={[
-                  styles.flagAccentSection,
-                  styles.flagAccentRed,
-                ]}
-              />
-            </View>
-
-            <Text style={styles.subtitle}>
-              {youthMember
-                ? "Projects available to youth members"
-                : "Manage SK projects and programs"}
-            </Text>
-          </View>
-        </View>
+        <AppHeader
+          title="Projects"
+        />
+<View style={styles.screen}>
+        <ScrollView
+          style={styles.list}
+          contentContainerStyle={[
+            styles.listContent,
+            { flexGrow: 1 },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
 
         {canManage && (
         <Pressable
@@ -221,15 +199,7 @@ export default function ProjectsScreen() {
             </Text>
           </View>
         ) : (
-          <ScrollView
-            style={styles.list}
-            contentContainerStyle={
-              styles.listContent
-            }
-            showsVerticalScrollIndicator={
-              false
-            }
-          >
+          <>
             <View style={styles.listHeader}>
               <Text style={styles.countText}>
                 {projects.length}{" "}
@@ -359,11 +329,13 @@ export default function ProjectsScreen() {
                 </View>
               </Pressable>
             ))}
-          </ScrollView>
+          </>
         )}
 
+        </ScrollView>
+
         {canManage && (
-        <Pressable
+<Pressable
           style={({ pressed }) => [
             styles.floatingAddButton,
             pressed &&
@@ -400,7 +372,7 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
+    paddingTop: 0,
   },
 
   header: {
@@ -538,7 +510,8 @@ const styles = StyleSheet.create({
   },
 
   listContent: {
-    paddingBottom: 100,
+    paddingTop: spacing.xl,
+    paddingBottom: 112,
   },
 
   listHeader: {
@@ -553,7 +526,7 @@ const styles = StyleSheet.create({
   floatingAddButton: {
     position: "absolute",
     right: spacing.lg,
-    bottom: spacing.md,
+    bottom: 70 + spacing.md,
     width: 58,
     height: 58,
     borderRadius: 29,

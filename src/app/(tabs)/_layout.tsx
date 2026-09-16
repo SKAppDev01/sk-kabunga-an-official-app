@@ -47,30 +47,25 @@ export default function TabsLayout() {
         },
 
         tabBarStyle: {
-          height:
-            62 +
-            Math.max(
-              insets.bottom,
-              8
-            ),
-
-          paddingTop: 7,
-
-          paddingBottom:
-            Math.max(
-              insets.bottom,
-              8
-            ),
-
+          position: "absolute",
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 70 + insets.bottom,
+          paddingTop: 8,
+          paddingBottom: Math.max(insets.bottom, 8),
           borderTopWidth: 1,
-
-          borderTopColor:
-            colors.border,
-
-          backgroundColor:
-            colors.white,
-
-          elevation: 8,
+          borderLeftWidth: 0,
+          borderRightWidth: 0,
+          borderBottomWidth: 0,
+          borderColor: colors.border,
+          borderTopLeftRadius: 28,
+          borderTopRightRadius: 28,
+          borderBottomLeftRadius: 0,
+          borderBottomRightRadius: 0,
+          backgroundColor: colors.white,
+          elevation: 12,
+          overflow: "hidden",
         },
       }}
     >

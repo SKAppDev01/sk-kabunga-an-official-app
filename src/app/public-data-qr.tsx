@@ -19,6 +19,8 @@ import {
 import QRCode from "react-native-qrcode-svg";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../components/AppHeader";
+
 import {
   generatePublicDataQr,
   PublicQrGeneration,
@@ -252,43 +254,29 @@ export default function PublicDataQrScreen() {
   return (
     <SafeAreaView
       style={styles.safeArea}
+    
+      edges={["left", "right", "bottom"]}
     >
-      <View style={styles.header}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() =>
-            router.back()
-          }
-        >
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={colors.text}
-          />
-        </Pressable>
-
-        <Text
-          style={styles.headerTitle}
-        >
-          Public QR
-        </Text>
-
-        <Pressable
-          style={styles.refreshButton}
-          onPress={generate}
-          disabled={isLoading}
-        >
-          <Ionicons
-            name="refresh-outline"
-            size={22}
-            color={
-              isLoading
-                ? colors.textMuted
-                : colors.primary
-            }
-          />
-        </Pressable>
-      </View>
+      <AppHeader
+        title="Public QR"
+        showBack
+        right={
+          <Pressable
+            style={styles.refreshButton}
+            onPress={generate}
+            disabled={isLoading}
+            accessibilityRole="button"
+            accessibilityLabel="Refresh public QR"
+          >
+            <Ionicons
+              name="refresh-outline"
+              size={22}
+              color={isLoading ? colors.textMuted : colors.primary}
+            />
+          </Pressable>
+        }
+      />
+      
 
       <ScrollView
         style={styles.scroll}
@@ -299,6 +287,7 @@ export default function PublicDataQrScreen() {
           false
         }
       >
+
         <Text style={styles.title}>
           Public Read-Only QR
         </Text>
@@ -574,14 +563,20 @@ const styles = StyleSheet.create({
     backgroundColor: "#E3F2FD",
   },
   header: {
-    height: 60,
+    minHeight: 88,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal:
-      spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor:
-      colors.border,
+    alignSelf: "stretch",
+    marginHorizontal: -spacing.xl,
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    paddingTop: 0,
+    paddingBottom: 0,
+    backgroundColor: colors.primary,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    elevation: 4,
+    zIndex: 20,
   },
   backButton: {
     width: 44,
@@ -592,17 +587,10 @@ const styles = StyleSheet.create({
   refreshButton: {
     width: 44,
     height: 44,
-    alignItems: "flex-end",
+    alignItems: "center",
     justifyContent: "center",
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize:
-      typography.fontSize.lg,
-    fontWeight:
-      typography.fontWeight.bold,
-    color: colors.text,
+    borderRadius: 22,
+    backgroundColor: colors.white,
   },
   scroll: {
     flex: 1,

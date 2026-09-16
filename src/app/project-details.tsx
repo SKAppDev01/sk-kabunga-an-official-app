@@ -19,6 +19,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../components/AppHeader";
+
 import {
   getProjectExpenseTotal,
 } from "../services/project-expenses";
@@ -294,25 +296,14 @@ export default function ProjectDetailsScreen() {
   return (
     <SafeAreaView
       style={styles.safeArea}
+    
+      edges={["left", "right", "bottom"]}
     >
-      <View style={styles.header}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={colors.text}
-          />
-        </Pressable>
-
-        <Text style={styles.headerTitle}>
-          Project Details
-        </Text>
-
-        <View style={styles.headerSpacer} />
-      </View>
+      <AppHeader
+        title="Project Details"
+        showBack
+      />
+      
 
       {isLoading ? (
         <View style={styles.centerState}>
@@ -340,6 +331,7 @@ export default function ProjectDetailsScreen() {
             false
           }
         >
+
           <View style={styles.heroCard}>
             <View style={styles.heroTopRow}>
               <View style={styles.heroIcon}>
@@ -768,12 +760,20 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    height: 60,
+    minHeight: 88,
     flexDirection: "row",
     alignItems: "center",
+    alignSelf: "stretch",
+    marginHorizontal: -spacing.xl,
+    marginBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingTop: 0,
+    paddingBottom: 0,
+    backgroundColor: colors.primary,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    elevation: 4,
+    zIndex: 20,
   },
 
   backButton: {
@@ -783,16 +783,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: typography.fontSize.lg,
-    fontWeight:
-      typography.fontWeight.bold,
-    color: colors.text,
-  },
 
-  headerSpacer: { width: 44 },
 
   centerState: {
     flex: 1,

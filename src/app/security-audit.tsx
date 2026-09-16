@@ -16,6 +16,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../components/AppHeader";
+
 import {
   getSecurityAuditOverview,
   SecurityAuditOverview,
@@ -147,43 +149,29 @@ export default function SecurityAuditScreen() {
   return (
     <SafeAreaView
       style={styles.safeArea}
+    
+      edges={["left", "right", "bottom"]}
     >
-      <View style={styles.header}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() =>
-            router.back()
-          }
-        >
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={colors.text}
-          />
-        </Pressable>
-
-        <Text
-          style={styles.headerTitle}
-        >
-          Security & Audit
-        </Text>
-
-        <Pressable
-          style={styles.refreshButton}
-          onPress={load}
-          disabled={isLoading}
-        >
-          <Ionicons
-            name="refresh-outline"
-            size={22}
-            color={
-              isLoading
-                ? colors.textMuted
-                : colors.primary
-            }
-          />
-        </Pressable>
-      </View>
+      <AppHeader
+        title="Security & Audit"
+        showBack
+        right={
+          <Pressable
+            style={styles.refreshButton}
+            onPress={load}
+            disabled={isLoading}
+            accessibilityRole="button"
+            accessibilityLabel="Refresh security audit"
+          >
+            <Ionicons
+              name="refresh-outline"
+              size={22}
+              color={isLoading ? colors.textMuted : colors.primary}
+            />
+          </Pressable>
+        }
+      />
+      
 
       {isLoading ? (
         <View style={styles.centerState}>
@@ -219,6 +207,7 @@ export default function SecurityAuditScreen() {
             false
           }
         >
+
           <Text style={styles.title}>
             Local Protection
           </Text>
@@ -647,14 +636,20 @@ const styles = StyleSheet.create({
     backgroundColor: "#E3F2FD",
   },
   header: {
-    height: 60,
+    minHeight: 88,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal:
-      spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor:
-      colors.border,
+    alignSelf: "stretch",
+    marginHorizontal: -spacing.xl,
+    marginBottom: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    paddingTop: 0,
+    paddingBottom: 0,
+    backgroundColor: colors.primary,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    elevation: 4,
+    zIndex: 20,
   },
   backButton: {
     width: 44,
@@ -665,17 +660,10 @@ const styles = StyleSheet.create({
   refreshButton: {
     width: 44,
     height: 44,
-    alignItems: "flex-end",
+    alignItems: "center",
     justifyContent: "center",
-  },
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize:
-      typography.fontSize.lg,
-    fontWeight:
-      typography.fontWeight.bold,
-    color: colors.text,
+    borderRadius: 22,
+    backgroundColor: colors.white,
   },
   centerState: {
     flex: 1,

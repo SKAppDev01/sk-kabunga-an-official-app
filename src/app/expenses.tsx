@@ -16,6 +16,8 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { AppHeader } from "../components/AppHeader";
+
 import {
   FinanceExpense,
   getAllFinanceExpenses,
@@ -136,27 +138,24 @@ export default function ExpensesScreen() {
     !isLoading && !isYouthMember;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.header}>
-        <Pressable
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Ionicons
-            name="arrow-back"
-            size={24}
-            color={colors.text}
-          />
-        </Pressable>
-
-        <Text style={styles.headerTitle}>
-          Expenses
-        </Text>
-
-        <View style={styles.headerSpacer} />
-      </View>
+    <SafeAreaView style={styles.safeArea}
+      edges={["left", "right", "bottom"]}
+    >
+      <AppHeader
+        title="Expenses"
+        showBack
+      />
+      
 
       <View style={styles.screen}>
+        <ScrollView
+          style={styles.list}
+          contentContainerStyle={[
+            styles.listContent,
+            { flexGrow: 1 },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
         <View style={styles.summaryCard}>
           <View style={styles.summaryIcon}>
             <Ionicons
@@ -215,15 +214,7 @@ export default function ExpensesScreen() {
             </Text>
           </View>
         ) : (
-          <ScrollView
-            style={styles.list}
-            contentContainerStyle={
-              styles.listContent
-            }
-            showsVerticalScrollIndicator={
-              false
-            }
-          >
+          <>
             {expenses.map((expense) => (
               <Pressable
                 key={expense.id}
@@ -346,11 +337,13 @@ export default function ExpensesScreen() {
                 ) : null}
               </Pressable>
             ))}
-          </ScrollView>
+          </>
         )}
 
+        </ScrollView>
+
         {canManage && (
-        <Pressable
+<Pressable
           style={({ pressed }) => [
             styles.floatingAddButton,
             pressed &&
@@ -379,12 +372,20 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    height: 60,
+    minHeight: 88,
     flexDirection: "row",
     alignItems: "center",
+    alignSelf: "stretch",
+    marginHorizontal: -spacing.xl,
+    marginBottom: spacing.xl,
     paddingHorizontal: spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
+    paddingTop: 0,
+    paddingBottom: 0,
+    backgroundColor: colors.primary,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    elevation: 4,
+    zIndex: 20,
   },
 
   backButton: {
@@ -394,24 +395,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
 
-  headerTitle: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: typography.fontSize.lg,
-    fontWeight:
-      typography.fontWeight.bold,
-    color: colors.text,
-  },
 
-  headerSpacer: {
-    width: 44,
-  },
 
   screen: {
     backgroundColor: "#E3F2FD",
     flex: 1,
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.lg,
+    paddingTop: 0,
   },
 
   summaryCard: {
