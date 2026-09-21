@@ -1,0 +1,398 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// -----------------------------------------------------------------------------
+// Enums
+// -----------------------------------------------------------------------------
+
+enum Role {
+  SUPER_ADMIN
+  SK_CHAIRPERSON
+  SK_SECRETARY
+  SK_TREASURER
+  SK_OFFICIAL
+  AUTHORIZED_USER
+}
+
+enum Sex {
+  MALE
+  FEMALE
+  PREFER_NOT_TO_SAY
+}
+
+enum CivilStatus {
+  SINGLE
+  MARRIED
+  WIDOWED
+  SEPARATED
+}
+
+enum EducationalBackground {
+  ELEMENTARY
+  HIGH_SCHOOL
+  SENIOR_HIGH
+  COLLEGE
+  VOCATIONAL
+  POST_GRADUATE
+  NONE
+}
+
+enum WorkStatus {
+  EMPLOYED
+  UNEMPLOYED
+  STUDENT
+  SELF_EMPLOYED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  EXCUSED
+  LATE
+}
+
+enum EventStatus {
+  PLANNED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum ProjectStatus {
+  PROPOSED
+  APPROVED
+  IN_PROGRESS
+  COMPLETED
+  ON_HOLD
+  CANCELLED
+}
+
+enum FinancialType {
+  INCOME
+  EXPENSE
+}
+
+enum ItemCondition {
+  NEW
+  GOOD
+  FAIR
+  POOR
+  DAMAGED
+  DISPOSED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  SYNC
+  BACKUP
+  RESTORE
+}
+
+enum SyncStatus {
+  PENDING
+  SYNCED
+  CONFLICT
+}
+
+enum BackupStatus {
+  SUCCESS
+  FAILED
+  IN_PROGRESS
+}
+
+// -----------------------------------------------------------------------------
+// Models
+// -----------------------------------------------------------------------------
+
+model User {
+  id           String    @id @default(uuid()) @db.Uuid
+  username     String    @unique
+  email        String?   @unique
+  passwordHash String
+  firstName    String
+  middleName   String?
+  lastName     String
+  role         Role      @default(AUTHORIZED_USER)
+  isActive     Boolean   @default(true)
+  isVerified   Boolean   @default(false)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  deletedAt    DateTime?
+  createdBy    String?   @db.Uuid
+  updatedBy    String?   @db.Uuid
+  deviceId     String?
+  version      Int       @default(1)
+
+  refreshTokens RefreshToken[]
+  devices       Device[]
+  auditLogs     AuditLog[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  tokenHash String   @unique
+  familyId  String   @db.Uuid
+  isRevoked Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deviceId  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model YouthRecord {
+  id                    String                @id @default(uuid()) @db.Uuid
+  voterId               String?               @unique
+  firstName             String
+  middleName            String?
+  lastName              String
+  extName               String?
+  birthDate             DateTime
+  age                   Int
+  sex                   Sex
+  civilStatus           CivilStatus           @default(SINGLE)
+  address               String
+  purok                 String
+  barangay              String                @default("Kabunga-an")
+  contactNumber         String?
+  email                 String?
+  educationalBackground EducationalBackground @default(NONE)
+  workStatus            WorkStatus            @default(STUDENT)
+  isRegisteredVoter     Boolean               @default(false)
+  isSkVoter             Boolean               @default(true)
+  remarks               String?
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
+  deletedAt             DateTime?
+  createdBy             String?               @db.Uuid
+  updatedBy             String?               @db.Uuid
+  deviceId              String?
+  version               Int                   @default(1)
+
+  attendances Attendance[]
+
+  @@map("youth_records")
+}
+
+model Device {
+  id               String    @id @default(uuid()) @db.Uuid
+  deviceIdentifier String    @unique
+  deviceName       String
+  userId           String?   @db.Uuid
+  lastSeenAt       DateTime  @default(now())
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+  version          Int       @default(1)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("devices")
+}
+
+model AuditLog {
+  id         String      @id @default(uuid()) @db.Uuid
+  userId     String?     @db.Uuid
+  action     AuditAction
+  entityType String
+  entityId   String?
+  deviceId   String?
+  details    Json?
+  ipAddress  String?
+  timestamp  DateTime    @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
+
+model Attendance {
+  id          String           @id @default(uuid()) @db.Uuid
+  eventId     String?          @db.Uuid
+  meetingId   String?          @db.Uuid
+  youthId     String?          @db.Uuid
+  officialId  String?          @db.Uuid
+  status      AttendanceStatus @default(PRESENT)
+  checkInTime DateTime         @default(now())
+  remarks     String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?          @db.Uuid
+  updatedBy   String?          @db.Uuid
+  deviceId    String?
+  version     Int              @default(1)
+
+  youth         YouthRecord?   @relation(fields: [youthId], references: [id], onDelete: SetNull)
+  activityEvent ActivityEvent? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+  meeting       Meeting?       @relation(fields: [meetingId], references: [id], onDelete: SetNull)
+
+  @@map("attendances")
+}
+
+model ActivityEvent {
+  id          String      @id @default(uuid()) @db.Uuid
+  title       String
+  description String?
+  location    String?
+  startDate   DateTime
+  endDate     DateTime?
+  status      EventStatus @default(PLANNED)
+  budget      Decimal?    @db.Decimal(12, 2)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?     @db.Uuid
+  updatedBy   String?     @db.Uuid
+  deviceId    String?
+  version     Int         @default(1)
+
+  attendances Attendance[]
+
+  @@map("activity_events")
+}
+
+model Meeting {
+  id               String        @id @default(uuid()) @db.Uuid
+  title            String
+  description      String?
+  location         String?
+  meetingDate      DateTime
+  minutesOfMeeting String?
+  status           MeetingStatus @default(SCHEDULED)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  deletedAt        DateTime?
+  createdBy        String?       @db.Uuid
+  updatedBy        String?       @db.Uuid
+  deviceId         String?
+  version          Int           @default(1)
+
+  attendances Attendance[]
+
+  @@map("meetings")
+}
+
+model Project {
+  id          String        @id @default(uuid()) @db.Uuid
+  title       String
+  description String?
+  budget      Decimal       @db.Decimal(12, 2)
+  spent       Decimal       @default(0.00) @db.Decimal(12, 2)
+  status      ProjectStatus @default(PROPOSED)
+  startDate   DateTime?
+  endDate     DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?       @db.Uuid
+  updatedBy   String?       @db.Uuid
+  deviceId    String?
+  version     Int           @default(1)
+
+  @@map("projects")
+}
+
+model FinancialRecord {
+  id              String        @id @default(uuid()) @db.Uuid
+  type            FinancialType
+  category        String
+  amount          Decimal       @db.Decimal(12, 2)
+  description     String?
+  transactionDate DateTime
+  referenceNo     String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  deletedAt       DateTime?
+  createdBy       String?       @db.Uuid
+  updatedBy       String?       @db.Uuid
+  deviceId        String?
+  version         Int           @default(1)
+
+  @@map("financial_records")
+}
+
+model InventoryItem {
+  id          String        @id @default(uuid()) @db.Uuid
+  itemName    String
+  description String?
+  quantity    Int           @default(1)
+  unit        String?
+  condition   ItemCondition @default(GOOD)
+  location    String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+  createdBy   String?       @db.Uuid
+  updatedBy   String?       @db.Uuid
+  deviceId    String?
+  version     Int           @default(1)
+
+  @@map("inventory_items")
+}
+
+model Document {
+  id        String    @id @default(uuid()) @db.Uuid
+  title     String
+  category  String?
+  filePath  String
+  fileSize  Int?
+  mimeType  String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  createdBy String?   @db.Uuid
+  updatedBy String?   @db.Uuid
+  deviceId  String?
+  version   Int       @default(1)
+
+  @@map("documents")
+}
+
+model SyncMetadata {
+  id         String     @id @default(uuid()) @db.Uuid
+  deviceId   String
+  entityType String
+  lastSyncAt DateTime   @default(now())
+  status     SyncStatus @default(SYNCED)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@map("sync_metadata")
+}
+
+model BackupMetadata {
+  id         String       @id @default(uuid()) @db.Uuid
+  fileName   String
+  fileSize   BigInt
+  backupDate DateTime     @default(now())
+  checksum   String?
+  status     BackupStatus @default(SUCCESS)
+  createdBy  String?      @db.Uuid
+  createdAt  DateTime     @default(now())
+
+  @@map("backup_metadata")
+}
