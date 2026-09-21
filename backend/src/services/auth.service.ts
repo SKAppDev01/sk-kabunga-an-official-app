@@ -1,4 +1,4 @@
-import { AuditAction } from '@prisma/client';
+import { AuditAction, Role } from '@prisma/client';
 import crypto from 'crypto';
 import { refreshTokenRepository } from '../repositories/refreshToken.repository.js';
 import { userRepository } from '../repositories/user.repository.js';
@@ -30,7 +30,8 @@ export class AuthService {
       firstName: input.firstName,
       middleName: input.middleName,
       lastName: input.lastName,
-      role: input.role,
+      // Public registration can never self-assign an elevated role.
+      role: Role.AUTHORIZED_USER,
       deviceId: input.deviceId,
     });
 

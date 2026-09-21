@@ -19,11 +19,17 @@ export function buildApp(): FastifyInstance {
   });
 
   // CORS configuration
-  const allowedOrigins = env.CORS_ORIGIN.split(',').map((origin) => origin.trim());
+  const allowAnyOrigin = env.CORS_ORIGIN.trim() === '*';
+  const allowedOrigins = env.CORS_ORIGIN.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
   app.register(cors, {
-    origin: env.CORS_ORIGIN === '*' ? true : allowedOrigins,
+    // When wildcard CORS is used, credentials are deliberately disabled.
+    // Specific origins may use credentials when a future web dashboard needs them.
+    origin: allowAnyOrigin ? true : allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    credentials: true,
+    credentials: !allowAnyOrigin,
   });
 
   // Rate limiting for auth & API protection

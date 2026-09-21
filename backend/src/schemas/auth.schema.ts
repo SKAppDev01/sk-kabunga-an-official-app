@@ -1,4 +1,3 @@
-import { Role } from '@prisma/client';
 import { z } from 'zod';
 
 export const registerSchema = z.object({
@@ -18,14 +17,13 @@ export const registerSchema = z.object({
   firstName: z.string().min(1, 'First name is required').max(100),
   middleName: z.string().max(100).optional().nullable(),
   lastName: z.string().min(1, 'Last name is required').max(100),
-  role: z.nativeEnum(Role).optional().default(Role.AUTHORIZED_USER),
-  deviceId: z.string().optional().nullable(),
+  deviceId: z.string().max(255).optional().nullable(),
 });
 
 export const loginSchema = z.object({
   usernameOrEmail: z.string().min(1, 'Username or email is required'),
   password: z.string().min(1, 'Password is required'),
-  deviceId: z.string().optional().nullable(),
+  deviceId: z.string().max(255).optional().nullable(),
 });
 
 export const refreshTokenSchema = z.object({

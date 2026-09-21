@@ -277,3 +277,17 @@ Security Enforcement:
 - **Token Rotation**: Refresh token family rotation with automatic reuse detection & revocation.
 - **Query Parameterization**: Enforced via Prisma ORM.
 - **Graceful Error Handling**: Database internals and secrets are suppressed from error payloads.
+
+## Pre-database security hardening
+
+Before the first live database migration, this backend applies the following safeguards:
+
+- JWT secrets are required at runtime and have no built-in fallback values.
+- `DATABASE_URL` must be a PostgreSQL URL and obvious placeholder values are rejected.
+- Public registration always creates `AUTHORIZED_USER`; clients cannot self-assign SK/admin roles.
+- Youth-record routes require an authenticated **and verified** account.
+- JWT verification pins the accepted algorithm to HS256.
+- Wildcard CORS disables credentialed browser requests.
+- `npm run preflight` checks required configuration without printing secret values.
+
+Publicly registered accounts remain unverified until an authorized administrative workflow verifies them. Do not grant access to personal youth data by manually bypassing verification.

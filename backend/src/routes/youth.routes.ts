@@ -3,10 +3,13 @@ import { FastifyInstance } from 'fastify';
 import { youthController } from '../controllers/youth.controller.js';
 import { authenticate } from '../middleware/auth.middleware.js';
 import { requireRoles } from '../middleware/role.middleware.js';
+import { requireVerifiedUser } from '../middleware/verified.middleware.js';
 
 export async function youthRoutes(fastify: FastifyInstance) {
   // All youth endpoints require authentication
   fastify.addHook('preHandler', authenticate);
+  // Youth records contain personal information. Only verified accounts may access them.
+  fastify.addHook('preHandler', requireVerifiedUser);
 
   // List youth records
   fastify.get('/', youthController.getYouthList.bind(youthController));
