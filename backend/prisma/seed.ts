@@ -1,14 +1,20 @@
 import { PrismaClient, Role } from '@prisma/client';
-import bcrypt from 'bcryptjs';
+import { hashPassword } from '../src/utils/password.js';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Starting database seeding...');
 
-  const adminUsername = process.env.SEED_ADMIN_USERNAME || 'admin';
-  const adminEmail = process.env.SEED_ADMIN_EMAIL || 'sk.kabungaan.admin@gmail.com';
-  const rawPassword = process.env.SEED_ADMIN_PASSWORD || 'Admin@SK2026';
+  const adminUsername = process.env.SEED_ADMIN_USERNAME;
+  const adminEmail = process.env.SEED_ADMIN_EMAIL;
+  const rawPassword = process.env.SEED_ADMIN_PASSWORD;
+
+  if (!adminUsername || !adminEmail || !rawPassword) {
+    throw new Error(
+      'Missing required seed environment variables. Please configure SEED_ADMIN_USERNAME, SEED_ADMIN_EMAIL, and SEED_ADMIN_PASSWORD.'
+    );
+  }
 
   const existingAdmin = await prisma.user.findFirst({
     where: {
@@ -17,8 +23,7 @@ async function main() {
   });
 
   if (!existingAdmin) {
-    const salt = await bcrypt.genSalt(12);
-    const passwordHash = await bcrypt.hash(rawPassword, salt);
+    const passwordHash = await hashPassword(rawPassword);
 
     const adminUser = await prisma.user.create({
       data: {
@@ -49,3 +54,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+

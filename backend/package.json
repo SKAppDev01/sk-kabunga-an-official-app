@@ -15,6 +15,9 @@
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "keywords": [
     "sk-kabungaan",
     "fastify",
@@ -49,11 +52,5 @@
   },
   "optionalDependencies": {
     "argon2": "^0.41.1"
-  },
-  "allowScripts": {
-    "@prisma/client@5.22.0": true,
-    "@prisma/engines@5.22.0": true,
-    "prisma@5.22.0": true,
-    "esbuild@0.28.2": true
   }
 }
